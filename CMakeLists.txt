@@ -71,10 +71,12 @@ else ()
 endif ()
 set ( F3TBB_Include ${F3TBB_Root}/include )	
 
-
-
-# find Eigen module
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen 3 QUIET)
+if(NOT Eigen_FOUND)
+  include(${CMAKE_CURRENT_SOURCE_DIR}/external/Eigen/cmake/FindEigen3.cmake)
+  set(Eigen_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/Eigen/include)
+endif()
+include_directories(${Eigen_INCLUDE_DIR})
 
 
 # find libigl module
