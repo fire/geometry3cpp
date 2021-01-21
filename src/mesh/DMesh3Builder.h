@@ -48,7 +48,6 @@ public:
     //  (so, currently we can only have 1 material per mesh!)
     std::vector<int> MaterialAssignment;
 
-	// [RMS] std::any is C++17 feature... 
 	std::vector<std::map<std::string, PMetadata>> Metadata;
 
     int nActiveMesh;
@@ -62,7 +61,6 @@ public:
     {
         int index = (int)Meshes.size();
 		PDMesh3 m = std::make_unique<DMesh3>(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
-        //DMesh3 m = DMesh3(bHaveVtxNormals, bHaveVtxColors, bHaveVtxUVs, bHaveFaceGroups);
         Meshes.push_back(m);
         MaterialAssignment.push_back(-1);     // no material is known
 		Metadata.push_back(std::map<std::string, PMetadata>());

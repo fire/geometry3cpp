@@ -79,7 +79,9 @@ int main(int argc, char **argv) {
   std::ifstream input("sailor.obj");
 
   BlockTimer read_timer("read", true);
-  reader.Read(input, ReadOptions::Defaults(), builder);
+  ReadOptions options = ReadOptions::Defaults();
+  options.ReadMaterials = true;
+  reader.Read(input, options, builder);
   read_timer.Stop();
   std::cout << "read " << builder.Meshes.size() << " meshes, took "
             << read_timer.ToString() << std::endl;
@@ -96,8 +98,9 @@ int main(int argc, char **argv) {
   BlockTimer remesh_timer("remesh", true);
   Remesher r(mesh1);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
-  r.SetTargetEdgeLength(0.01);
   r.SmoothSpeedT = 1.0;
+  r.EnableParallelSmooth = true;
+  r.PreventNormalFlips = true;
   r.Precompute();
   for (int k = 0; k < 5; ++k) {
   	r.BasicRemeshPass();
@@ -106,6 +109,8 @@ int main(int argc, char **argv) {
 
   remesh_timer.Stop();
   std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
+
+  std::cout << mesh1->MeshInfoString();
 
   std::ofstream output("output_sailor.obj");
   std::vector<WriteMesh> write_meshes;
