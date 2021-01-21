@@ -105,7 +105,7 @@ public:
                 Vector3d nnew = (vb - va).cross(newv - va);
                 sign = edge_flip_metric(ncur, nnew);
             } else
-                throw new std::exception("should never be here!");
+                throw new std::runtime_error("should never be here!");
             if (sign <= edge_flip_tol)
                 return true;
         }

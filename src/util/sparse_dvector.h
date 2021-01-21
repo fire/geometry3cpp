@@ -177,7 +177,7 @@ const sparse_dvector<Type> & sparse_dvector<Type>::operator=( const sparse_dvect
 		if (copy.m_vSegments[k].pData != nullptr) {
 			get_or_allocate(k);
 #ifdef WIN32	
-			memcpy_s( m_vSegments[k].pData, m_nSegmentSize*sizeof( Type ), copy.m_vSegments[k].pData, m_nSegmentSize*sizeof( Type ) );
+			memcpy( m_vSegments[k].pData, m_nSegmentSize*sizeof( Type ), copy.m_vSegments[k].pData, m_nSegmentSize*sizeof( Type ) );
 #else
 			memcpy( m_vSegments[k].pData, copy.m_vSegments[k].pData, m_nSegmentSize*sizeof( Type ) );
 #endif

@@ -200,14 +200,14 @@ void dvector<Type>::resize( size_t nCount )
 }
 
 
-template <class Type>
-void dvector<Type>::resize( size_t nCount, const Type & init_value )
-{
-	size_t nCurSize = size();
-	resize(nCount);
-	for ( size_t nIndex = nCurSize; nIndex < nCount; ++nIndex ) 
-		Blocks[ nIndex / m_nSegmentSize ].pData[ nIndex % m_nSegmentSize ] = init_value;
-}
+// template <class Type>
+// void dvector<Type>::resize( size_t nCount, const Type & init_value )
+// {
+// 	size_t nCurSize = size();
+// 	resize(nCount);
+// 	for ( size_t nIndex = nCurSize; nIndex < nCount; ++nIndex ) 
+// 		Blocks[ nIndex / m_nSegmentSize ].pData[ nIndex % m_nSegmentSize ] = init_value;
+// }
 
 
 

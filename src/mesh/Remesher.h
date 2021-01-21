@@ -188,7 +188,8 @@ public:
         if (EnableSmoothing && SmoothSpeedT > 0) {
 			if (EnableSmoothInPlace)
 				//FullSmoothPass_InPlace(EnableParallelSmooth);
-				gBreakToDebugger();
+                ;
+				// gBreakToDebugger();
             else
                 FullSmoothPass_Buffer(EnableParallelSmooth);
             DoDebugChecks();
@@ -567,11 +568,12 @@ protected:
             smoothFunc = CustomSmoothF;
         } else {
 			if (SmoothType == SmoothTypes::MeanValue || SmoothType == SmoothTypes::Cotan)
-				gBreakToDebugger(); // not implemented!
+				// gBreakToDebugger(); // not implemented!
             //if (SmoothType == SmoothTypes.MeanValue)
             //    smoothFunc = MeshUtil.MeanValueSmooth;
             //else if (SmoothType == SmoothTypes.Cotan)
             //    smoothFunc = MeshUtil.CotanSmooth;
+            ;
         }
 
 		auto smooth = [&](int vID) {
@@ -723,7 +725,8 @@ protected:
     {
 //#ifdef DEBUG
 		if (Contains(DebugEdges, eid))
-			gBreakToDebugger();
+			// gBreakToDebugger();
+            ;
 //#endif
     }
 
@@ -761,7 +764,8 @@ protected:
                 Vector3d curpos = mesh->GetVertex(vid);
                 Vector3d projected = vc.second.Target->Project(curpos, vid);
 				if ((curpos - projected).squaredNorm() > 0.0001f)
-					gBreakToDebugger();
+					// gBreakToDebugger();
+                    ;
             }
         }
     }

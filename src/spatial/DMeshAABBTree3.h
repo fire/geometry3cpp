@@ -50,7 +50,7 @@ public:
 	virtual int FindNearestTriangle(const Vector3d & p, double & fNearestDistSqr, double fMaxDist = DOUBLE_MAX) override
 	{
 		if (mesh_timestamp != mesh->ShapeTimestamp())
-			throw std::exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+			throw std::runtime_error("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
 
 		fNearestDistSqr = (fMaxDist < DOUBLE_MAX) ? fMaxDist * fMaxDist : DOUBLE_MAX;
 		int tNearID = InvalidID;
@@ -150,7 +150,7 @@ public:
 	virtual void DoTraversal(TreeTraversal * traversal)
 	{
 		if (mesh_timestamp != mesh->ShapeTimestamp())
-			throw std::exception("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
+			throw std::runtime_error("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
 
 		tree_traversal(root_index, 0, traversal);
 	}
@@ -433,10 +433,11 @@ public:
 
 		test_coverage(tri_counts, parent_indices, root_index);
 
-		for (int ti : mesh->TriangleIndices()) {
-			if (tri_counts[ti] != 1)
-				gBreakToDebugger();
-		}
+		// for (int ti : mesh->TriangleIndices()) {
+		// 	if (tri_counts[ti] != 1) {
+		// 		// gBreakToDebugger();
+		// 	}
+		// }
 	}
 
 private:
@@ -461,7 +462,8 @@ private:
 				for (int j = 0; j < 3; ++j) {
 					Vector3d v = mesh->GetVertex(tv[j]);
 					if ( ! box.Contains(v) )
-						gBreakToDebugger();
+						// gBreakToDebugger();
+						;
 				}
 			}
 
@@ -498,7 +500,8 @@ private:
 			double fTriDistSqr = MeshQueries::TriDistanceSqr(*mesh, tID, p);
 			if (fTriDistSqr < fBoxDistSqr)
 				if (fabs(fTriDistSqr - fBoxDistSqr) > Wml::Mathd::ZERO_TOLERANCE * 100)
-					gBreakToDebugger();
+					// gBreakToDebugger();
+					;
 		};
 		tree_traversal(iBox, 0, t);
 	}
@@ -513,7 +516,8 @@ private:
 			for (int j = 0; j < 3; ++j) {
 				Vector3d v = mesh->GetVertex(tv[j]);
 				if (box.Contains(v) == false)
-					gBreakToDebugger();
+					// gBreakToDebugger();
+					;
 			}
 		};
 		tree_traversal(iBox, 0, t);

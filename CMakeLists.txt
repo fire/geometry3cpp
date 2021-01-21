@@ -2,7 +2,6 @@
 # Top-level CMake file for geometry3 library
 # Ryan Schmidt - rms@rms80.com
 #
-
 cmake_minimum_required (VERSION 3.4.0)
 project (geometry3)
 
@@ -23,7 +22,6 @@ include ("cmake/PCHSupportV3.cmake")
 #include ("cmake/F3CopyThirdPartyFiles.cmake")
 #include ("cmake/F3CopyThirdPartyFolder.cmake")
 #include ("cmake/F3AddForcedInclude.cmake")
-
 
 if (APPLE)
 	# tell xcode to use C++14 language & std library

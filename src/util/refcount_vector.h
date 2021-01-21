@@ -345,11 +345,11 @@ public:
 			this->map_func = map_func;
 		}
 
-		typename mapped_iterator<int, ToType, index_iterator> begin() {
+		mapped_iterator<int, ToType, index_iterator> begin() {
 			return mapped_iterator<int, ToType, index_iterator>(enumerable.begin(), map_func);
 		}
 
-		typename mapped_iterator<int, ToType, index_iterator> end() {
+		mapped_iterator<int, ToType, index_iterator> end() {
 			return mapped_iterator<int, ToType, index_iterator>(enumerable.end(), map_func);
 		}
 	};
@@ -380,11 +380,11 @@ public:
 			this->filter_func = filter_func;
 		}
 
-		typename filtered_iterator<int, index_iterator> begin() {
+		filtered_iterator<int, index_iterator> begin() {
 			return filtered_iterator<int, index_iterator>(enumerable.begin(), enumerable.end(), filter_func);
 		}
 
-		typename filtered_iterator<int, index_iterator> end() {
+		filtered_iterator<int, index_iterator> end() {
 			return filtered_iterator<int, index_iterator>(enumerable.end(), enumerable.end(), filter_func);
 		}
 	};

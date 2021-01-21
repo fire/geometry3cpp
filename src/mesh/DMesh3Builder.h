@@ -2,6 +2,8 @@
 
 #include <MaterialTypes.h>
 #include <DMesh3.h>
+#include <memory>
+#include <string.h>
 
 namespace g3
 {
@@ -81,7 +83,7 @@ public:
     int AppendNewMesh(const DMesh3 & existingMesh)
     {
         int index = (int)Meshes.size();
-        Meshes.push_back(std::make_unique<DMesh3>(existingMesh));
+        Meshes.push_back(std::make_shared<DMesh3>(existingMesh));
         MaterialAssignment.push_back(-1);     // no material is known
 		Metadata.push_back(std::map<std::string, PMetadata>());
         nActiveMesh = index;
@@ -93,7 +95,7 @@ public:
         if (id >= 0 && id < Meshes.size())
             nActiveMesh = id;
         else
-            throw std::exception("active mesh id is out of range");
+            throw std::runtime_error("active mesh id is out of range");
     }
 
     int AppendTriangle(int i, int j, int k)
@@ -164,7 +166,7 @@ public:
     void AssignMaterial(int materialID, int meshID)
     {
         if (meshID >= MaterialAssignment.size() || materialID >= Materials.size())
-            throw std::exception("[DMesh3Builder::AssignMaterial] meshID or materialID are out-of-range");
+            throw std::runtime_error("[DMesh3Builder::AssignMaterial] meshID or materialID are out-of-range");
         MaterialAssignment[meshID] = materialID;
     }
 

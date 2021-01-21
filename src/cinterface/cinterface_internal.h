@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string.h>
+
 #include <g3types.h>
 #include <PackedMesh.h>
 #include <DMesh3.h>
@@ -69,7 +71,7 @@ struct MeshHandle
 		if ( NV <= 0 || NV*3 > buffer_size )
 			return -1;
 		if (packed != nullptr) {
-			memcpy_s( buf, NV*3*sizeof( float ), packed->GetPositionsBuffer(), NV*3*sizeof( float ) );
+			memcpy( buf, packed->GetPositionsBuffer(), NV*3*sizeof( float ) );
 			return NV;
 		} else if (dynamic != nullptr) {
 			int k = 0;
@@ -109,7 +111,7 @@ struct MeshHandle
 		if ( NT <= 0 || NT*3 > buffer_size )
 			return -1;
 		if (packed != nullptr) {
-			memcpy_s( buf, NT*3*sizeof(unsigned int), packed->GetIndicesBuffer(), NT*3*sizeof(unsigned int) );
+			memcpy( buf, packed->GetIndicesBuffer(), NT*3*sizeof(unsigned int) );
 			return NT;
 		} else if (dynamic != nullptr) {
 			int k = 0;

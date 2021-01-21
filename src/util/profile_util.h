@@ -71,10 +71,10 @@ public:
 		if (minutes > 0) {
 			seconds -= minutes * 60;  milliseconds -= minutes * 60000;
 			milliseconds -= seconds * 1000;
-			sprintf_s(buf, 255, "%02d:%02d.%5d", minutes, seconds, milliseconds);
+			sprintf(buf, "%02d:%02d.%5ld", minutes, seconds, milliseconds);
 		} else {
 			milliseconds -= seconds * 1000;
-			sprintf_s(buf, 255, "%02d.%d", seconds, milliseconds);
+			sprintf(buf, "%02d.%ld", seconds, milliseconds);
 		}
 		return std::string(buf);
 	}

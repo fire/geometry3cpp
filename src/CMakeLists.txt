@@ -20,6 +20,7 @@ file ( GLOB g3_cinterface "cinterface/*.*" )
 
 # [RMS] UNCOMMENT FOR STATIC LIBRARY BUILD
 add_library ( geometry3 ${g3_geomroot} ${g3_geom} ${g3_util} ${g3_mesh} ${g3_spatial} ${g3_cinterface} )
+target_compile_features(geometry3 PUBLIC cxx_std_17)
 target_compile_definitions(geometry3 PUBLIC G3_STATIC_LIB)
 
 

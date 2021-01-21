@@ -12,6 +12,8 @@
 #include <Mathematics/GteConvexPolyhedron3.h>
 #include <memory>
 
+using namespace std;
+
 namespace gte
 {
 

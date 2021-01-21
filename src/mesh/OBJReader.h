@@ -279,7 +279,7 @@ public:
 
 	IOReadResult BuildMeshes_ByMaterial(ReadOptions options, DMesh3Builder & builder)
 	{
-		throw std::exception("TODO");
+		throw std::runtime_error("TODO");
 	}
    // IOReadResult BuildMeshes_ByMaterial(ReadOptions options, DMesh3Builder & builder)
    // {
@@ -610,7 +610,7 @@ public:
 
 	IOReadResult ReadMaterials(const std::string & sPath)
 	{
-		throw std::exception("need to implement this...");
+		throw std::runtime_error("need to implement this...");
 	}
 	//IOReadResult ReadMaterials(const std::string & sPath)
 	//{

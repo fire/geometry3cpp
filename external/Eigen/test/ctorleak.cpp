@@ -24,7 +24,7 @@ struct Foo
     --Foo::object_count;
   }
 
-  class Fail : public std::exception {};
+  class Fail : public std::runtime_error {};
 };
 
 Index Foo::object_count = 0;

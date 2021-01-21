@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 namespace g3 {
 
 
@@ -189,7 +191,6 @@ template<typename OutputType, typename InputType, typename InputIteratorT>
 class expand_enumerable
 {
 	using ExpandFunctionT = std::function<OutputType(InputType, int&)>;
-	using ExpandIteratorT = expand_iterator<OutputType, InputType, InputIteratorT>;
 
 public:
 	ExpandFunctionT expand_func;
@@ -208,12 +209,12 @@ public:
 		this->expand_func = expand_func;
 	}
 
-	typename ExpandIteratorT begin() {
-		return ExpandIteratorT(begin_itr, end_itr, expand_func);
+	expand_iterator<OutputType, InputType, InputIteratorT> begin() {
+		return expand_iterator<OutputType, InputType, InputIteratorT>(begin_itr, end_itr, expand_func);
 	}
 
-	typename ExpandIteratorT end() {
-		return ExpandIteratorT(end_itr, end_itr, expand_func);
+	expand_iterator<OutputType, InputType, InputIteratorT> end() {
+		return expand_iterator<OutputType, InputType, InputIteratorT>(end_itr, end_itr, expand_func);
 	}
 };
 

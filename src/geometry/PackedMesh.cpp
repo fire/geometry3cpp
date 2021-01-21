@@ -111,15 +111,15 @@ void g3::PackedMesh::CopyVertices( const std::vector<float>& vPositions, const s
 void g3::PackedMesh::CopyVertices( const float * pPositions, size_t nVertices, const float * pNormals, const float * pColors )
 {
 	m_vPositions.resize( nVertices*3 );
-	memcpy_s( &m_vPositions[0], nVertices*3*sizeof(float), pPositions, nVertices*3*sizeof(float) );
+	memcpy( &m_vPositions[0], pPositions, nVertices*3*sizeof(float) );
 
 	if (pNormals) {
 		m_vNormals.resize( nVertices*3 );
-		memcpy_s( &m_vNormals[0], nVertices*3*sizeof(float), pNormals, nVertices*3*sizeof(float) );
+		memcpy( &m_vNormals[0], pNormals, nVertices*3*sizeof(float) );
 	}
 	if (pColors) {
 		m_vColors.resize( nVertices*3 );
-		memcpy_s( &m_vColors[0], nVertices*3*sizeof(float), pColors, nVertices*3*sizeof(float) );
+		memcpy( &m_vColors[0], pColors, nVertices*3*sizeof(float) );
 	}
 	updateTimeStamp();
 }
@@ -136,10 +136,10 @@ void g3::PackedMesh::CopyTriangles( const std::vector<unsigned int> & vIndices,
 void g3::PackedMesh::CopyTriangles( const unsigned int * pIndices, size_t nTriangles, const unsigned int * pGroups )
 {
 	m_vIndices.resize( nTriangles*3 );
-	memcpy_s( &m_vIndices[0], nTriangles*3*sizeof(unsigned int), pIndices, nTriangles*3*sizeof(unsigned int) );
+	memcpy( &m_vIndices[0],pIndices, nTriangles*3*sizeof(unsigned int) );
 	if (pGroups) {
 		m_vTriGroups.resize( nTriangles );
-		memcpy_s( &m_vTriGroups[0], nTriangles*sizeof(unsigned int), pGroups, nTriangles*sizeof(unsigned int) );
+		memcpy( &m_vTriGroups[0], pGroups, nTriangles*sizeof(unsigned int) );
 	}
 	updateTimeStamp();
 }
@@ -161,7 +161,7 @@ void PackedMesh::CopyTriColors( const float * pColors, size_t nTriangles )
 {
 	gDevAssert(nTriangles == GetTriangleCount());
 	m_vTriColors.resize( nTriangles*3 );
-	memcpy_s( &m_vTriColors[0], nTriangles*3*sizeof(float), pColors, nTriangles*3*sizeof(float) );
+	memcpy( &m_vTriColors[0], pColors, nTriangles*3*sizeof(float) );
 	updateTimeStamp();
 }
 
@@ -176,7 +176,7 @@ void PackedMesh::CopyTriGroups( const unsigned int * pGroups, size_t nTriangles 
 {
 	gDevAssert(nTriangles == GetTriangleCount());
 	m_vTriGroups.resize( nTriangles );
-	memcpy_s( &m_vTriGroups[0], nTriangles*sizeof(unsigned int), pGroups, nTriangles*sizeof(unsigned int) );
+	memcpy( &m_vTriGroups[0], pGroups, nTriangles*sizeof(unsigned int) );
 	updateTimeStamp();
 }
 

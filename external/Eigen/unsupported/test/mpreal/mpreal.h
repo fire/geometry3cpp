@@ -553,7 +553,7 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 // Exceptions
-class conversion_overflow : public std::exception {
+class conversion_overflow : public std::runtime_error {
 public:
     std::string why() { return "inexact conversion from floating point"; }
 };

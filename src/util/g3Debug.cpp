@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <wchar.h>
+#include <string.h>
 
 // for OutputDebugString
 #ifdef WIN32
@@ -17,9 +18,11 @@ void g3::g3_testAssert(bool b)
     if (!b)
 #ifdef __APPLE__
         __asm__("int $3\n" : : );
+#elif __linux__
 #else
     __debugbreak();
 #endif
+	;
 }
 
 void g3::g3_devAssert(bool b)
@@ -27,9 +30,11 @@ void g3::g3_devAssert(bool b)
 	if (!b)
 #ifdef __APPLE__
         __asm__("int $3\n" : : );        
+#elif __linux__
 #else
 		__debugbreak();
 #endif
+	;
 }
 
 void g3::g3_debugPrint(std::string fmt, ...)

@@ -3133,9 +3133,9 @@ public:
 
 		// update the two other edges whose triangle nbrs have changed
 		if ( replace_edge_triangle(eca, t0,t1) == -1 )
-			throw std::exception("DMesh3.FlipEdge: first replace_edge_triangle failed");
+			throw std::runtime_error("DMesh3.FlipEdge: first replace_edge_triangle failed");
 		if ( replace_edge_triangle(edb, t1, t0) == -1 )
-			throw std::exception("DMesh3.FlipEdge: second replace_edge_triangle failed");
+			throw std::runtime_error("DMesh3.FlipEdge: second replace_edge_triangle failed");
 
 		// update triangle nbr lists (these are edges)
 		set_triangle_edges(t0, ecd, edb, ebc);
@@ -3143,13 +3143,13 @@ public:
 
 		// remove old eab from verts a and b, and decrement ref counts
 		if ( vertex_edges.Remove(a, eab) == false ) 
-			throw std::exception("DMesh3.FlipEdge: first edge list remove failed");
+			throw std::runtime_error("DMesh3.FlipEdge: first edge list remove failed");
 		if ( vertex_edges.Remove(b, eab) == false ) 
-			throw std::exception("DMesh3.FlipEdge: second edge list remove failed");
+			throw std::runtime_error("DMesh3.FlipEdge: second edge list remove failed");
 		vertices_refcount.decrement(a);
 		vertices_refcount.decrement(b);
 		if ( IsVertex(a) == false || IsVertex(b) == false )
-			throw std::exception("DMesh3.FlipEdge: either a or b is not a vertex?");
+			throw std::runtime_error("DMesh3.FlipEdge: either a or b is not a vertex?");
 
         // add edge ecd to verts c and d, and increment ref counts
         vertex_edges.Insert(c, ecd);
@@ -3859,7 +3859,7 @@ public:
 		} else if (eFailMode == FailMode::Throw) {
 			CheckOrFailF = [&](bool b) {
 				if (b == false)
-					throw std::exception("DMesh3.CheckValidity: check failed!");
+					throw std::runtime_error("DMesh3.CheckValidity: check failed!");
 				is_ok = is_ok && b;
 			};
 		}
@@ -3951,7 +3951,7 @@ public:
 			CheckOrFailF(IsVertex(vID));
 
 			Vector3d v = GetVertex(vID);
-			CheckOrFailF( _isnan(v.squaredNorm()) == false);
+			CheckOrFailF( isnan(v.squaredNorm()) == false);
 			CheckOrFailF( isfinite(v.squaredNorm()) );
 
 			for (int edgeid : vertex_edges.values(vID)) {

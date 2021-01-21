@@ -1,6 +1,7 @@
 #pragma once
 
 #include <g3types.h>
+#include <math.h>  
 
 /*
  * VectorUtil contains a set of utility functions for matrix/vector math.
@@ -137,7 +138,7 @@ namespace g3
 	 */
 
 	inline bool IsFinite(const Vector3d & v) {
-		return _finite(v.x()) && _finite(v.y()) && _finite(v.z());
+		return isfinite(v.x()) && isfinite(v.y()) && isfinite(v.z());
 	}
 
 	inline Vector2f d2f(const Vector2d & v) { 
@@ -222,7 +223,7 @@ namespace g3
 	/// </summary>
 	/// <returns>The normal direction.</returns>
 	template <typename DerivedA, typename DerivedB, typename DerivedC>
-	inline auto FastNormalDirection(
+	inline Eigen::MatrixBase<DerivedC> FastNormalDirection(
 		const Eigen::MatrixBase<DerivedA> & v1, 
 		const Eigen::MatrixBase<DerivedB> & v2, 
 		const Eigen::MatrixBase<DerivedC> & v3)

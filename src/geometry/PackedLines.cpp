@@ -4,8 +4,6 @@
 #include "g3Debug.h"
 #include <g3platform.h>
 
-
-
 using namespace g3;
 
 PackedLines::PackedLines( LinesType eType )
@@ -96,11 +94,11 @@ void PackedLines::CopyVertices( const std::vector<float>& vPositions, const std:
 void PackedLines::CopyVertices( const float * pPositions, size_t nVertices, const float * pColors )
 {
 	m_vPositions.resize( nVertices*3 );
-	memcpy_s( &m_vPositions[0], nVertices*3*sizeof(float), pPositions, nVertices*3*sizeof(float) );
+	memcpy( &m_vPositions[0],pPositions, nVertices*3*sizeof(float) );
 
 	if (pColors) {
 		m_vColors.resize( nVertices*3 );
-		memcpy_s( &m_vColors[0], nVertices*3*sizeof(float), pColors, nVertices*3*sizeof(float) );
+		memcpy( &m_vColors[0], pColors, nVertices*3*sizeof(float) );
 	}
 	updateTimeStamp();
 }
@@ -118,7 +116,7 @@ void PackedLines::CopyLines( const unsigned int * pIndices, size_t nLines )
 {
 	gDevAssert(m_eType == Segments || m_eType == IndexedSegments );
 	m_vIndices.resize( nLines*2 );
-	memcpy_s( &m_vIndices[0], nLines*2*sizeof(unsigned int), pIndices, nLines*2*sizeof(unsigned int) );
+	memcpy( &m_vIndices[0], pIndices, nLines*2*sizeof(unsigned int) );
 	m_eType = IndexedSegments;
 	updateTimeStamp();
 }

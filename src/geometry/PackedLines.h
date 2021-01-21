@@ -2,6 +2,7 @@
 
 #include <g3types.h>
 #include <GeometryInterfaces.h>
+#include <string.h>
 
 namespace g3
 {
