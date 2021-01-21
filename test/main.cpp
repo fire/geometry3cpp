@@ -5,13 +5,13 @@
 #include <DMesh3.h>
 #include <DMeshAABBTree3.h>
 #include <MeshQueries.h>
+#include <MeshSubdivider.h>
 #include <OBJReader.h>
 #include <OBJWriter.h>
 #include <Remesher.h>
 #include <VectorUtil.h>
 #include <refcount_vector.h>
 #include <small_list_set.h>
-#include <MeshSubdivider.h>
 
 using namespace g3;
 
@@ -39,19 +39,23 @@ int main(int argc, char **argv) {
   spatialTest.Build();
   spatialTest.TestCoverage();
   BlockTimer remesh_timer("remesh", true);
-  Remesher r(mesh1);
-  r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
-  // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
-  // TODO 2021-01-21 Fix all boundary edges // fire
-  // "half the edge length", approximately
-  int iterations = 25;
-  r.SmoothSpeedT = 1.0;
-  r.SmoothSpeedT /= iterations;
-  r.EnableParallelSmooth = true;
-  r.PreventNormalFlips = true;
-  for (int k = 0; k < iterations; ++k) {
-  	r.BasicRemeshPass();
-	std::cout << "remesh pass " << k << std::endl;
+  MeshSubdivider s;
+  s.Split1to4(*mesh1);
+  if (false) {
+    Remesher r(mesh1);
+    r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
+    // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
+    // TODO 2021-01-21 Fix all boundary edges // fire
+    // "half the edge length", approximately
+    int iterations = 25;
+    r.SmoothSpeedT = 1.0;
+    r.SmoothSpeedT /= iterations;
+    r.EnableParallelSmooth = true;
+    r.PreventNormalFlips = true;
+    for (int k = 0; k < iterations; ++k) {
+      r.BasicRemeshPass();
+      std::cout << "remesh pass " << k << std::endl;
+    }
   }
 
   remesh_timer.Stop();
