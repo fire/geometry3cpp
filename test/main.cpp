@@ -1,14 +1,3 @@
-
-//#include <cinterface.h>
-
-//#include <CTriangulation.h>
-//#include <CMeshIO.h>
-
-//#include <cinterface_internal.h>
-
-//#include <vector>
-//#include <DMesh3.h>
-
 #include <iostream>
 
 #include "profile_util.h"
@@ -22,6 +11,7 @@
 #include <VectorUtil.h>
 #include <refcount_vector.h>
 #include <small_list_set.h>
+#include <MeshSubdivider.h>
 
 using namespace g3;
 
@@ -104,12 +94,15 @@ int main(int argc, char **argv) {
   spatialTest.TestCoverage();
 
   BlockTimer remesh_timer("remesh", true);
+  MeshSubdivider s;
+  s.Split1to4(*mesh1); 
   Remesher r(mesh1);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
   r.Precompute();
   for (int k = 0; k < 2; ++k) {
   	r.BasicRemeshPass();
   }
+
   remesh_timer.Stop();
   std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
 
