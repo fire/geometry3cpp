@@ -44,29 +44,13 @@ All dependencies are included in the repository, for convenience.
 
 # Building
 
-**Currently only definitely working on Windows, but the code should be portable..."should"...***
-
-1) Run **bin\get_cmake.bat** to download and unzip the required version of CMake. This will be unzipped in bin\cmake_win, it will not affect your system installation of CMake (if installed). 
-
-2) Run **external\cmake_install_eigen.bat**. This does some cmake stuff so that the Eigen CMake module can be found. Again, it doesn't affect any other Eigen installations/etc. *(Not entirely clear why this is necessary, but CMake cannot find Eigen without it)*
-
-3) Run top-level **StartVS2017_Debug.bat** or **StartVS2017_Release.bat** to run CMake and automatically open the resulting VS2017 solution. 
-
-If you are actively working on the g3cpp code, UpdateVS_Debug_2017.bat will regenerate the solution file, which will cause VS2017 to prompt you to reload it. 
-
-
-# Packaging / Build Output
-
-Currently a dll, output to visual studio build folders, ie *build\Win64_Debug* or *_Release*. 
-
-You can switch to a static .lib by editing *src\CMakeLists.txt* and commenting/uncommenting the relevant block (see comments in file)
-
-No packaging as of yet. You will have to add the various header source folders to other projects. Sorry!! (happy to take PRs here!)
-
-
-# Testing
-
-There isn't any, yet.
+```
+mkdir build
+cmake ..
+cd build
+# os specific build like make or geometry3cpp.sln
+# execute the tests
+```
 
 # libigl interop
 
@@ -77,6 +61,3 @@ Since libigl also uses Eigen, many things are compatible. The main interop requi
     mesh.ToIGLMesh(V,F);                    // convert DMesh3 to libigl mesh. Resizes V and F.
 
 Note that ToIGLMesh() properly handles gaps in the index spaces (ie if vertices or triangles were deleted), so there will not be a 1-1 correspondence between DMesh3 vert/tri indices and libigl row indices unless the DMesh3 is compact.
-    
-    
-    
