@@ -25,17 +25,17 @@ Interval1<Real>::Interval1 (Real xmin, Real xmax)
 }
 //----------------------------------------------------------------------------
 template <typename Real>
-bool Interval1<Real>::Overlaps (const Interval1& box) const
+bool Interval1<Real>::Overlaps (const Interval1& o) const
 {
 	return ! (o.Min > Max || o.Max < Min);
 }
 //----------------------------------------------------------------------------
 template <typename Real>
-Interval1<Real> Interval1<Real>::IntersectionWith(const Interval1& other) const
+Interval1<Real> Interval1<Real>::IntersectionWith(const Interval1& o) const
 {
 	if (o.Min > Max || o.Max < Min)
 		return EMPTY;
-	return new Interval1d(std::max(Min, o.Min), std::min(Max, o.Max));
+	return new Interval1<double>(std::max(Min, o.Min), std::min(Max, o.Max));
 }
 //----------------------------------------------------------------------------
 
