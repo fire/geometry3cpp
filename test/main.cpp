@@ -69,17 +69,16 @@ int main(int argc, char** argv) {
 	r.SmoothSpeedT /= iterations;
 	r.EnableParallelSmooth = true;
 	double target_edge_len = avg_edge_len;
-	//target_edge_len = Clamp(target_edge_len, 0.006, 1.0);
-	std::cout << "target edge len " << target_edge_len << std::endl;
+	target_edge_len = Clamp(target_edge_len, 0.008, 1.0); // Meters
+	std::cout << "target edge len " << target_edge_len  << std::endl;
 	r.SetTargetEdgeLength(target_edge_len);
+	r.Precompute();
 	for (int k = 0; k < iterations; ++k) {
 		r.BasicRemeshPass();
 		std::cout << "remesh pass " << k << std::endl;
 	}
-
 	remesh_timer.Stop();
 	std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
-
 	std::cout << mesh1->MeshInfoString();
 
 	std::ofstream output("output_sailor.obj");
