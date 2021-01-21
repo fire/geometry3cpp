@@ -44,10 +44,12 @@ int main(int argc, char **argv) {
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   // TODO 2021-01-21 Fix all boundary edges // fire
   // "half the edge length", approximately
-  r.SmoothSpeedT = 0.01;
+  int iterations = 25;
+  r.SmoothSpeedT = 1.0;
+  r.SmoothSpeedT /= iterations;
   r.EnableParallelSmooth = true;
   r.PreventNormalFlips = true;
-  for (int k = 0; k < 5; ++k) {
+  for (int k = 0; k < iterations; ++k) {
   	r.BasicRemeshPass();
 	std::cout << "remesh pass " << k << std::endl;
   }
