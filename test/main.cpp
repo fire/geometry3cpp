@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
   OBJReader reader;
   DMesh3Builder builder;
 
-  std::ifstream input("input_wand.obj");
+  std::ifstream input("sailor.obj");
 
   BlockTimer read_timer("read", true);
   reader.Read(input, ReadOptions::Defaults(), builder);
@@ -107,13 +107,11 @@ int main(int argc, char **argv) {
   Remesher r(mesh1);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
   r.SmoothSpeedT = 1.0;
-  r.SetTargetEdgeLength(0.05);
-  for (int k = 0; k < 25; ++k)
-    r.BasicRemeshPass();
+  r.BasicRemeshPass();
   remesh_timer.Stop();
   std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
 
-  std::ofstream output("output_wand.obj");
+  std::ofstream output("output_sailor.obj");
   std::vector<WriteMesh> write_meshes;
   write_meshes.push_back(WriteMesh(mesh1));
   OBJWriter writer;
