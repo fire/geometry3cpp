@@ -94,13 +94,14 @@ int main(int argc, char **argv) {
   spatialTest.TestCoverage();
 
   BlockTimer remesh_timer("remesh", true);
-  MeshSubdivider s;
-  s.Split1to4(*mesh1); 
   Remesher r(mesh1);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
+  r.SetTargetEdgeLength(0.01);
+  r.SmoothSpeedT = 1.0;
   r.Precompute();
-  for (int k = 0; k < 2; ++k) {
+  for (int k = 0; k < 5; ++k) {
   	r.BasicRemeshPass();
+	std::cout << "remesh pass " << k << std::endl;
   }
 
   remesh_timer.Stop();
