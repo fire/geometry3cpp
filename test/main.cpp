@@ -65,13 +65,11 @@ int main(int argc, char** argv) {
 	r.SetExternalConstraints(cons);
 	r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
 	// http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
-	int iterations = 25;
-	r.SmoothSpeedT = 0.5;
+	int iterations = 5;
 	r.SmoothSpeedT /= iterations;
 	r.EnableParallelSmooth = true;
-	r.PreventNormalFlips = true;
 	double target_edge_len = avg_edge_len;
-	target_edge_len = Clamp(target_edge_len, 0.05, 1.0); // meters
+	//target_edge_len = Clamp(target_edge_len, 0.006, 1.0);
 	std::cout << "target edge len " << target_edge_len << std::endl;
 	r.SetTargetEdgeLength(target_edge_len);
 	for (int k = 0; k < iterations; ++k) {
