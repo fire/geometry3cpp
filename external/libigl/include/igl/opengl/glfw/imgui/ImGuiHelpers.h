@@ -58,7 +58,7 @@ inline bool ListBox(const char* label, int* idx, std::vector<std::string>& value
     static_cast<void*>(&values), values.size());
 }
 
-inline bool InputText(const char* label, std::string &str, ImGuiInputTextFlags flags = 0, ImGuiTextEditCallback callback = NULL, void* user_data = NULL)
+inline bool InputText(const char* label, std::string &str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL)
 {
   char buf[1024];
   std::fill_n(buf, 1024, 0);
@@ -99,6 +99,15 @@ inline bool SliderScalar(const char *label, T* value, T min = 0, T max = 0, cons
     fmt = ImGuiDataTypeTraits<T>::format;
   }
   return SliderScalar(label, ImGuiDataTypeTraits<T>::value, value, &min, &max, fmt);
+}
+
+template<typename Getter, typename Setter>
+inline bool Checkbox(const char* label, Getter get, Setter set)
+{
+  bool value = get();
+  bool ret = ImGui::Checkbox(label, &value);
+  set(value);
+  return ret;
 }
 
 } // namespace ImGui
