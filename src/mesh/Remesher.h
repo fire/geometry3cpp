@@ -737,9 +737,10 @@ protected:
       if (vc.second.Target != nullptr) {
         Vector3d curpos = mesh->GetVertex(vid);
         Vector3d projected = vc.second.Target->Project(curpos, vid);
-        if ((curpos - projected).squaredNorm() > 0.0001f)
-          // gBreakToDebugger();
-          ;
+        if ((curpos - projected).squaredNorm() > 0.0001f) {
+			// gBreakToDebugger();
+            continue;
+        }
       }
     }
   }
