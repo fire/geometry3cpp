@@ -1,6 +1,7 @@
 #pragma once
 
 #include <g3Config.h>
+#include <string>
 
 
 namespace g3
@@ -17,7 +18,6 @@ g3External void g3_debugPrint(const wchar_t * fmt, ...);
 g3External void g3_debugPrint(std::string fmt, ...);
 g3External void g3_debugPrint(std::wstring fmt, ...);
 
-}
 
 
 #define gDevAssert g3_devAssert
@@ -28,3 +28,4 @@ g3External void g3_debugPrint(std::wstring fmt, ...);
 
 // TODO: https://stackoverflow.com/questions/173618/is-there-a-portable-equivalent-to-debugbreak-debugbreak
 // #define gBreakToDebugger gBreakToDebugger
+}

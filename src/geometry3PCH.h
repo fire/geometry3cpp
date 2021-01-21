@@ -5,15 +5,11 @@
 #include "Wm5Mathematics.h"
 //#endif
 
-#include <memory>
-#include <vector>
-#include <map>
 #include <list>
+#include <map>
+#include <memory>
 #include <set>
+#include <vector>
 
 #include <Eigen/Core>
-#include <Eigen/Geometry> 
-
-
-
-
+#include <Eigen/Geometry>
