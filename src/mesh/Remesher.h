@@ -557,14 +557,15 @@ protected:
     if (CustomSmoothF != nullptr) {
       smoothFunc = CustomSmoothF;
     } else {
-      if (SmoothType == SmoothTypes::MeanValue ||
-          SmoothType == SmoothTypes::Cotan)
-        // gBreakToDebugger(); // not implemented!
-        // if (SmoothType == SmoothTypes.MeanValue)
-        //    smoothFunc = MeshUtil.MeanValueSmooth;
-        // else if (SmoothType == SmoothTypes.Cotan)
-        //    smoothFunc = MeshUtil.CotanSmooth;
-        ;
+        if (SmoothType == SmoothTypes::MeanValue ||
+            SmoothType == SmoothTypes::Cotan) {
+			// gBreakToDebugger(); // not implemented!
+			// if (SmoothType == SmoothTypes.MeanValue)
+			//    smoothFunc = MeshUtil.MeanValueSmooth;
+			// else if (SmoothType == SmoothTypes.Cotan)
+			//    smoothFunc = MeshUtil.CotanSmooth;
+            return;
+      }
     }
 
     auto smooth = [&](int vID) {
@@ -699,10 +700,10 @@ protected:
 protected:
   void RuntimeDebugCheck(int eid) {
     //#ifdef DEBUG
-    if (Contains(DebugEdges, eid))
-      // gBreakToDebugger();
-      ;
-    //#endif
+	  if (Contains(DebugEdges, eid)) {
+		  // gBreakToDebugger();
+          return;
+    }
   }
 
   bool ENABLE_DEBUG_CHECKS = false;

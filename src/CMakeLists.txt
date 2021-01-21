@@ -6,7 +6,6 @@ file ( GLOB g3_geom "geometry/*.*" )
 file ( GLOB g3_util "util/*.*" )
 file ( GLOB g3_mesh "mesh/*.*" )
 file ( GLOB g3_spatial "spatial/*.*" )
-file ( GLOB g3_cinterface "cinterface/*.*" )
 
 
 #

@@ -461,9 +461,9 @@ private:
 				Index3i tv = mesh->GetTriangle(ti);
 				for (int j = 0; j < 3; ++j) {
 					Vector3d v = mesh->GetVertex(tv[j]);
-					if ( ! box.Contains(v) )
-						// gBreakToDebugger();
-						;
+					if (!box.Contains(v)) {
+						break;
+					}
 				}
 			}
 
@@ -498,10 +498,12 @@ private:
 		TreeTraversal * t = new TreeTraversal();
 		t->NextTriangleF = [&](int tID) {
 			double fTriDistSqr = MeshQueries::TriDistanceSqr(*mesh, tID, p);
-			if (fTriDistSqr < fBoxDistSqr)
-				if (fabs(fTriDistSqr - fBoxDistSqr) > Wml::Mathd::ZERO_TOLERANCE * 100)
+			if (fTriDistSqr < fBoxDistSqr) {
+				if (fabs(fTriDistSqr - fBoxDistSqr) > Wml::Mathd::ZERO_TOLERANCE * 100) {
 					// gBreakToDebugger();
-					;
+					return;
+				}
+			}
 		};
 		tree_traversal(iBox, 0, t);
 	}
@@ -515,9 +517,10 @@ private:
 			Index3i tv = mesh->GetTriangle(tID);
 			for (int j = 0; j < 3; ++j) {
 				Vector3d v = mesh->GetVertex(tv[j]);
-				if (box.Contains(v) == false)
+				if (box.Contains(v) == false) {
+					return;
 					// gBreakToDebugger();
-					;
+				}
 			}
 		};
 		tree_traversal(iBox, 0, t);
