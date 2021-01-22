@@ -36,6 +36,15 @@ void PreserveAllBoundaryEdges(MeshConstraintsPtr cons, DMesh3Builder::PDMesh3 p_
 	}
 }
 
+// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+/// <summary>
+/// Remove 'fin' triangles that have only one connected triangle.
+/// Removing one fin can create another, by default will keep iterating
+/// until all fins removed (in a not very efficient way!).
+/// Pass bRepeatToConvergence=false to only do one pass.
+/// [TODO] if we are repeating, construct face selection from numbers of first
+// list and iterate over that on future passes!
+/// </summary>
 int RemoveFinTriangles(DMesh3* mesh, bool bRepeatToConvergence = true) {
 	int nRemoved = 0;
 	std::list<int> to_remove;
@@ -136,15 +145,6 @@ int main(int argc, char** argv) {
 		r.BasicRemeshPass();
 		std::cout << "remesh pass " << k << std::endl;
 	}
-	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	/// <summary>
-	/// Remove 'fin' triangles that have only one connected triangle.
-	/// Removing one fin can create another, by default will keep iterating
-	/// until all fins removed (in a not very efficient way!).
-	/// Pass bRepeatToConvergence=false to only do one pass.
-	/// [TODO] if we are repeating, construct face selection from numbers of first
-	// list and iterate over that on future passes!
-	/// </summary>
 	RemoveFinTriangles(mesh1.get(), true);
 	remesh_timer.Stop();
 	std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
