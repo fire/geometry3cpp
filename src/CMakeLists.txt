@@ -36,7 +36,6 @@ target_include_directories ( geometry3 PUBLIC "mesh" )
 target_include_directories ( geometry3 PUBLIC "spatial" )
 target_include_directories ( geometry3 PUBLIC "cinterface" )
 
-target_link_libraries ( geometry3 GTEngine )
 target_link_libraries ( geometry3 WmlCore )
 target_link_libraries ( geometry3 WmlMathematics )
 
