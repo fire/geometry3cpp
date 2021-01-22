@@ -45,8 +45,8 @@ void PreserveAllBoundaryEdges(MeshConstraintsPtr cons, DMesh3Builder::PDMesh3 p_
 /// [TODO] if we are repeating, construct face selection from numbers of first
 // list and iterate over that on future passes!
 /// </summary>
-int RemoveFinTriangles(DMesh3* mesh, bool bRepeatToConvergence = true) {
-	int nRemoved = 0;
+size_t RemoveFinTriangles(DMesh3Builder::PDMesh3 mesh, bool bRepeatToConvergence = true) {
+	size_t nRemoved = 0;
 	std::list<int> to_remove;
 	while (true) {
 		for (int tid : mesh->TriangleIndices()) {
@@ -72,6 +72,16 @@ int RemoveFinTriangles(DMesh3* mesh, bool bRepeatToConvergence = true) {
 		}
 	}
 	return nRemoved;
+}
+
+// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+void PreserveBoundaryLoops(MeshConstraintsPtr cons, DMesh3Builder::PDMesh3 mesh) {
+	// MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
+	//for (int32_t loop_i = 0;;) {
+	//	DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
+	//	DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
+	//	ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
+	//}
 }
 
 int main(int argc, char** argv) {
@@ -101,15 +111,7 @@ int main(int argc, char** argv) {
 	Remesher r(mesh1);
 	MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
 	PreserveAllBoundaryEdges(cons, mesh1);
-	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	// void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
-	//  // MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
-	//  for (int32_t loop_i = 0;;) {
-	//    DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
-	//    DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
-	//    ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
-	//  }
-	//}
+	// PreserveBoundaryLoops
 	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
 	// preserve group-region-border-loops
 	// int set_id = 1;
@@ -145,7 +147,7 @@ int main(int argc, char** argv) {
 		r.BasicRemeshPass();
 		std::cout << "remesh pass " << k << std::endl;
 	}
-	RemoveFinTriangles(mesh1.get(), true);
+	RemoveFinTriangles(mesh1, true);
 	remesh_timer.Stop();
 	std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
 	std::cout << mesh1->MeshInfoString();
