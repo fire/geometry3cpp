@@ -15,6 +15,30 @@
 
 using namespace g3;
 
+MeshConstraintsPtr FixAllBoundaryEdges(DMesh3 *p_mesh)
+{
+	MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
+	if (!p_mesh) {
+		return cons;
+	}
+	if (p_mesh->EdgeCount() <= 1) {
+		return cons;
+	}
+	int32_t max_edge_id = p_mesh->MaxEdgeID();
+	for (int edge_id = 0; edge_id < max_edge_id; ++edge_id) {
+		if (p_mesh->IsEdge(edge_id) && p_mesh->IsBoundaryEdge(edge_id)) {
+			cons->SetOrUpdateEdgeConstraint(edge_id,
+				EdgeConstraint::FullyConstrained());
+
+			Index2i ev = p_mesh->GetEdgeV(edge_id);
+			VertexConstraint vc = VertexConstraint::Pinned();
+			cons->SetOrUpdateVertexConstraint(ev.x(), vc);
+			cons->SetOrUpdateVertexConstraint(ev.y(), vc);
+		}
+	}
+	return cons;
+}
+
 int main(int argc, char** argv) {
 	OBJReader reader;
 	DMesh3Builder builder;
@@ -36,68 +60,55 @@ int main(int argc, char** argv) {
 	spatialTest.Build();
 	spatialTest.TestCoverage();
 	BlockTimer remesh_timer("remesh", true);
-	if (mesh1->EdgeCount() <= 1) {
-		return 1;
-	}
-	double avg_edge_len = 0.0;
-	for (int32_t edge_i = 1; edge_i < mesh1->EdgeCount(); edge_i++) {
-		double edge_len = (mesh1->GetEdgePoint(edge_i - 1, edge_i - 1) - mesh1->GetEdgePoint(edge_i - 1, edge_i)).norm();
-		avg_edge_len += edge_len;
-		avg_edge_len /= 2.0;
-
-	}
-	std::cout << "avg edge len " << avg_edge_len << std::endl;
-	Remesher r(mesh1); 
-	MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
-	{
-		int32_t max_edge_id = mesh1->MaxEdgeID();
-		for (int edge_id = 0; edge_id < max_edge_id; ++edge_id) {
-			if (mesh1->IsEdge(edge_id) && mesh1->IsBoundaryEdge(edge_id)) {
-				cons->SetOrUpdateEdgeConstraint(edge_id, EdgeConstraint::FullyConstrained());
-
-				Index2i ev = mesh1->GetEdgeV(edge_id);
-				VertexConstraint vc = VertexConstraint::Pinned();
-				cons->SetOrUpdateVertexConstraint(ev.x(), vc);
-				cons->SetOrUpdateVertexConstraint(ev.y(), vc);
-			}
-		}
-	}
-	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	// PreserveBoundaryLoops
-	// public static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
-	//     MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
-	//     foreach ( EdgeLoop loop in loops ) {
-	//         DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
-	//         DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
-	//         ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
-	//     }
-	// }
-	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	// preserve group-region-border-loops
-	// int set_id = 1;
-	// int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
-	// foreach (int[] tri_list in group_tri_sets) {
-	//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh, tri_list);
-	//     foreach (EdgeLoop loop in loops) {
-	//         MeshConstraintUtil.ConstrainVtxLoopTo(r, loop.Vertices, 
-	//             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
-	//     }
-	//  }
+	Remesher r(mesh1);
+	MeshConstraintsPtr cons;
+	cons = FixAllBoundaryEdges(mesh1.get());
 	r.SetExternalConstraints(cons);
 	r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
 	// http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
 	int iterations = 5;
 	r.SmoothSpeedT /= iterations;
 	r.EnableParallelSmooth = true;
+	double avg_edge_len = 0.0;
+	for (int32_t edge_i = 1; edge_i < mesh1->EdgeCount(); edge_i++) {
+		double edge_len = (mesh1->GetEdgePoint(edge_i - 1, edge_i - 1) -
+			mesh1->GetEdgePoint(edge_i - 1, edge_i))
+			.norm();
+		avg_edge_len += edge_len;
+		avg_edge_len /= 2.0;
+	}
+	std::cout << "avg edge len " << avg_edge_len << std::endl;
 	double target_edge_len = avg_edge_len;
 	target_edge_len = Clamp(target_edge_len, 0.008, 1.0); // Meters
-	std::cout << "target edge len " << target_edge_len  << std::endl;
+	std::cout << "target edge len " << target_edge_len << std::endl;
 	r.SetTargetEdgeLength(target_edge_len);
 	r.Precompute();
 	for (int k = 0; k < iterations; ++k) {
 		r.BasicRemeshPass();
 		std::cout << "remesh pass " << k << std::endl;
 	}
+
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// PreserveBoundaryLoops
+	//static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
+	//  // MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
+	//  for (int32_t loop_i = 0;;) {
+	//    DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
+	//    DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
+	//    ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
+	//  }
+	//}
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// preserve group-region-border-loops
+	// int set_id = 1;
+	// int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
+	// foreach (int[] tri_list in group_tri_sets) {
+	//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
+	//     tri_list); foreach (EdgeLoop loop in loops) {
+	//         MeshConstraintUtil.ConstrainVtxLoopTo(r, loop.Vertices,
+	//             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
+	//     }
+	//  }
 	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
 	// RemoveFinTriangles
 	// /// <summary>
@@ -105,9 +116,11 @@ int main(int argc, char** argv) {
 	// /// Removing one fin can create another, by default will keep iterating
 	// /// until all fins removed (in a not very efficient way!).
 	// /// Pass bRepeatToConvergence=false to only do one pass.
-	// /// [TODO] if we are repeating, construct face selection from nbrs of first list and iterate over that on future passes!
+	// /// [TODO] if we are repeating, construct face selection from nbrs of first
+	// list and iterate over that on future passes!
 	// /// </summary>
-	// public static int RemoveFinTriangles(DMesh3 mesh, Func<DMesh3, int, bool> removeF = null, bool bRepeatToConvergence = true)
+	// public static int RemoveFinTriangles(DMesh3 mesh, Func<DMesh3, int, bool>
+	// removeF = null, bool bRepeatToConvergence = true)
 	// {
 	//     MeshEditor editor = new MeshEditor(mesh);
 	//     int nRemoved = 0;
@@ -115,8 +128,9 @@ int main(int argc, char** argv) {
 	//     repeat:
 	//     foreach ( int tid in mesh.TriangleIndices()) {
 	//         Index3i nbrs = mesh.GetTriNeighbourTris(tid);
-	//         int c = ((nbrs.a != DMesh3.InvalidID)?1:0) + ((nbrs.b != DMesh3.InvalidID)?1:0) + ((nbrs.c != DMesh3.InvalidID)?1:0);
-	//         if (c <= 1) {
+	//         int c = ((nbrs.a != DMesh3.InvalidID)?1:0) + ((nbrs.b !=
+	//         DMesh3.InvalidID)?1:0) + ((nbrs.c != DMesh3.InvalidID)?1:0); if (c
+	//         <= 1) {
 	//             if (removeF == null || removeF(mesh, tid) == true )
 	//                 to_remove.Add(tid);
 	//         }
