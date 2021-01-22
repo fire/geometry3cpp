@@ -2,6 +2,7 @@
 
 #include "g3types.h"
 #include "DMesh3.h"
+#include <limits>
 
 namespace g3
 {
@@ -211,209 +212,178 @@ namespace g3
 		//	}
 
 
-		//	public void Reverse()
-		//	{
-		//		Array.Reverse(Vertices);
-		//		Array.Reverse(Edges);
-		//	}
+		void Reverse()
+		{
+			std::reverse(Vertices.begin(), Vertices.end());
+			std::reverse(Edges.begin(), Edges.end());
+		}
 
 
-		//	/// <summary>
-		//	/// check if all edges of this loop are internal edges (ie none on boundary)
-		//	/// </summary>
-		//	/// <returns></returns>
-		//	public bool IsInternalLoop()
-		//	{
-		//		int NV = Vertices.Length;
-		//		for (int i = 0; i < NV; ++i) {
-		//			int eid = Mesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
-		//			Debug.Assert(eid != DMesh3.InvalidID);
-		//			if (Mesh.IsBoundaryEdge(eid))
-		//				return false;
-		//		}
-		//		return true;
-		//	}
+		/// <summary>
+		/// check if all edges of this loop are internal edges (ie none on boundary)
+		/// </summary>
+		/// <returns></returns>
+		bool IsInternalLoop()
+		{
+			int NV = Vertices.size();
+			for (int i = 0; i < NV; ++i) {
+				int eid = Mesh->FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
+				if (eid == DMesh3::InvalidID) {
+					continue;
+				}
+				if (Mesh->IsBoundaryEdge(eid)) {
+					return false;
+				}
+			}
+			return true;
+		}
 
 
-		//	/// <summary>
-		//	/// Check if all edges of this loop are boundary edges.
-		//	/// If testMesh != null, will check that mesh instead of internal Mesh
-		//	/// </summary>
-		//	public bool IsBoundaryLoop(DMesh3 testMesh = null)
-		//	{
-		//		DMesh3 useMesh = (testMesh != null) ? testMesh : Mesh;
+			/// <summary>
+			/// Check if all edges of this loop are boundary edges.
+			/// If testMesh != null, will check that mesh instead of internal Mesh
+			/// </summary>
+			 bool IsBoundaryLoop(DMesh3Ptr testMesh)
+			{
+				DMesh3Ptr useMesh = !testMesh ? testMesh : Mesh;
 
-		//		int NV = Vertices.Length;
-		//		for (int i = 0; i < NV; ++i) {
-		//			int eid = useMesh.FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
-		//			Debug.Assert(eid != DMesh3.InvalidID);
-		//			if (useMesh.IsBoundaryEdge(eid) == false)
-		//				return false;
-		//		}
-		//		return true;
-		//	}
-
-
-		//	/// <summary>
-		//	/// find index of vertex vID in Vertices list, or -1 if not found
-		//	/// </summary>
-		//	public int FindVertexIndex(int vID)
-		//	{
-		//		int N = Vertices.Length;
-		//		for (int i = 0; i < N; ++i) {
-		//			if (Vertices[i] == vID)
-		//				return i;
-		//		}
-		//		return -1;
-		//	}
-
-		//	/// <summary>
-		//	/// find index of vertices of loop that is closest to point v
-		//	/// </summary>
-		//	public int FindNearestVertex(Vector3d v)
-		//	{
-		//		int iNear = -1;
-		//		double fNearSqr = double.MaxValue;
-		//		int N = Vertices.Length;
-		//		for (int i = 0; i < N; ++i) {
-		//			Vector3d lv = Mesh.GetVertex(Vertices[i]);
-		//			double d2 = v.DistanceSquared(lv);
-		//			if (d2 < fNearSqr) {
-		//				fNearSqr = d2;
-		//				iNear = i;
-		//			}
-		//		}
-		//		return iNear;
-		//	}
-
-		//	// count # of vertices in loop that are within tol of v
-		//	// final param returns last encountered index within tolerance, or -1 if return is 0
-		//	public int CountWithinTolerance(Vector3d v, double tol, out int last_in_tol)
-		//	{
-		//		last_in_tol = -1;
-		//		int count = 0;
-		//		int N = Vertices.Length;
-		//		for (int i = 0; i < N; ++i) {
-		//			Vector3d lv = Mesh.GetVertex(Vertices[i]);
-		//			if (v.Distance(lv) < tol) {
-		//				count++;
-		//				last_in_tol = i;
-		//			}
-		//		}
-		//		return count;
-		//	}
+				int NV = Vertices.size();
+				for (int i = 0; i < NV; ++i) {
+					int eid = useMesh->FindEdge(Vertices[i], Vertices[(i + 1) % NV]);
+					if (eid == DMesh3::InvalidID) {
+						continue;
+					}
+					if (useMesh->IsBoundaryEdge(eid) == false) {
+						return false;
+					}
+				}
+				return true;
+			}
 
 
-		//	// Check if Loop2 is the same set of positions on another mesh.
-		//	// Does not require the indexing to be the same
-		//	// Currently doesn't handle loop-reversal
-		//	public bool IsSameLoop(EdgeLoop Loop2, bool bReverse2 = false, double tolerance = MathUtil.ZeroTolerance)
-		//	{
-		//		// find a duplicate starting vertex
-		//		int N = Vertices.Length;
-		//		int N2 = Loop2.Vertices.Length;
-		//		if (N != N2)
-		//			return false;
+		/// <summary>
+		/// find index of vertex vID in Vertices list, or -1 if not found
+		/// </summary>
+		int FindVertexIndex(int vID)
+		{
+			int N = Vertices.size();
+			for (int i = 0; i < N; ++i) {
+				if (Vertices[i] == vID) {
+					return i;
+				}
+			}
+			return -1;
+		}
 
-		//		DMesh3 Mesh2 = Loop2.Mesh;
+		/// <summary>
+		/// find index of vertices of loop that is closest to point v
+		/// </summary>
+		int FindNearestVertex(Vector3d v)
+		{
+			int iNear = -1;
+			double fNearSqr = std::numeric_limits<double>::max();
+			int N = Vertices.size();
+			for (int i = 0; i < N; ++i) {
+				Vector3d lv = Mesh->GetVertex(Vertices[i]);
+				double d2 = (lv-v).squaredNorm();
+				if (d2 < fNearSqr) {
+					fNearSqr = d2;
+					iNear = i;
+				}
+			}
+			return iNear;
+		}
 
-		//		int start_i = 0, start_j = -1;
+		// count # of vertices in loop that are within tol of v
+		// final param returns last encountered index within tolerance, or -1 if return is 0
+		int CountWithinTolerance(Vector3d v, double tol, int &last_in_tol)
+		{
+			last_in_tol = -1;
+			int count = 0;
+			int N = Vertices.size();
+			for (int i = 0; i < N; ++i) {
+				Vector3d lv = Mesh->GetVertex(Vertices[i]);
+				if ((lv-v).norm() < tol) {
+					count++;
+					last_in_tol = i;
+				}
+			}
+			return count;
+		}       
 
-		//		// try to find a unique same-vertex on each loop. Do not
-		//		// use vertices that have duplicate positions.
-		//		bool bFoundGoodStart = false;
-		//		while (!bFoundGoodStart && start_i < N) {
-		//			Vector3d start_v = Mesh.GetVertex(start_i);
-		//			int count = Loop2.CountWithinTolerance(start_v, tolerance, out start_j);
-		//			if (count == 1)
-		//				bFoundGoodStart = true;
-		//			else
-		//				start_i++;
-		//		}
-		//		if (!bFoundGoodStart)
-		//			return false;       // no within-tolerance duplicate vtx to start at
+		// for ((i++) % N)-type loops, but where we might be using (i--)
+		static int WrapSignedIndex(int val, int mod)
+		{
+			while (val < 0) {
 
-		//		for (int ii = 0; ii < N; ++ii) {
-		//			int i = (start_i + ii) % N;
-		//			int j = (bReverse2) ?
-		//				MathUtil.WrapSignedIndex(start_j - ii, N2)
-		//				: (start_j + ii) % N2;
-		//			Vector3d v = Mesh.GetVertex(Vertices[i]);
-		//			Vector3d v2 = Mesh2.GetVertex(Loop2.Vertices[j]);
-		//			if (v.Distance(v2) > tolerance)
-		//				return false;
-		//		}
-
-		//		return true;
-		//	}
+				val += mod;
+			}
+			return val % mod;
+		}
 
 
 
-		//	/// <summary>
-		//	/// stores vertices [starti, starti+1, ... starti+count-1] in span, and returns span, or null if invalid range
-		//	/// </summary>
-		//	public int[] GetVertexSpan(int starti, int count, int[] span, bool reverse = false)
-		//	{
-		//		int N = Vertices.Length;
-		//		if (starti < 0 || starti >= N || count > N - 1)
-		//			return null;
-		//		if (reverse) {
-		//			for (int k = 0; k < count; ++k)
-		//				span[count - k - 1] = Vertices[(starti + k) % N];
-		//		}
-		//		else {
-		//			for (int k = 0; k < count; ++k)
-		//				span[k] = Vertices[(starti + k) % N];
-		//		}
-		//		return span;
-		//	}
+			// Check if Loop2 is the same set of positions on another mesh.
+			// Does not require the indexing to be the same
+			// Currently doesn't handle loop-reversal
+			bool IsSameLoop(EdgeLoopPtr Loop2, bool bReverse2 = false, double tolerance = 1e-08)
+			{
+				// find a duplicate starting vertex
+				int N = Vertices.size();
+				int N2 = Loop2->Vertices.size();
+				if (N != N2)
+					return false;
 
+				DMesh3Ptr Mesh2 = Loop2->Mesh;
 
+				int start_i = 0, start_j = -1;
 
+				// try to find a unique same-vertex on each loop. Do not
+				// use vertices that have duplicate positions.
+				bool bFoundGoodStart = false;
+				while (!bFoundGoodStart && start_i < N) {
+					Vector3d start_v = Mesh->GetVertex(start_i);
+					int count = Loop2->CountWithinTolerance(start_v, tolerance, start_j);
+					if (count == 1)
+						bFoundGoodStart = true;
+					else
+						start_i++;
+				}
+				if (!bFoundGoodStart)
+					return false;       // no within-tolerance duplicate vtx to start at
 
-		//	/// <summary>
-		//	/// Exhaustively check that verts and edges of this EdgeLoop are consistent. Not for production use.
-		//	/// </summary>
-		//	public bool CheckValidity(FailMode eFailMode = FailMode.Throw)
-		//	{
-		//		bool is_ok = true;
-		//		Action<bool> CheckOrFailF = (b) = > { is_ok = is_ok && b; };
-		//		if (eFailMode == FailMode.DebugAssert) {
-		//			CheckOrFailF = (b) = > { Debug.Assert(b); is_ok = is_ok && b; };
-		//		}
-		//		else if (eFailMode == FailMode.gDevAssert) {
-		//			CheckOrFailF = (b) = > { Util.gDevAssert(b); is_ok = is_ok && b; };
-		//		}
-		//		else if (eFailMode == FailMode.Throw) {
-		//			CheckOrFailF = (b) = > { if (b == false) throw new Exception("EdgeLoop.CheckValidity: check failed"); };
-		//		}
+				for (int ii = 0; ii < N; ++ii) {
+					int i = (start_i + ii) % N;
+					int j = (bReverse2) ?
+						WrapSignedIndex(start_j - ii, N2)
+						: (start_j + ii) % N2;
+					Vector3d v = Mesh->GetVertex(Vertices[i]);
+					Vector3d v2 = Mesh2->GetVertex(Loop2->Vertices[j]);
+					if ((v2-v).norm() > tolerance)
+						return false;
+				}
 
-		//		CheckOrFailF(Vertices.Length == Edges.Length);
-		//		for (int ei = 0; ei < Edges.Length; ++ei) {
-		//			Index2i ev = Mesh.GetEdgeV(Edges[ei]);
-		//			CheckOrFailF(Mesh.IsVertex(ev.a));
-		//			CheckOrFailF(Mesh.IsVertex(ev.b));
-		//			CheckOrFailF(Mesh.FindEdge(ev.a, ev.b) != DMesh3.InvalidID);
-		//			CheckOrFailF(Vertices[ei] == ev.a || Vertices[ei] == ev.b);
-		//			CheckOrFailF(Vertices[(ei + 1) % Edges.Length] == ev.a || Vertices[(ei + 1) % Edges.Length] == ev.b);
-		//		}
-		//		for (int vi = 0; vi < Vertices.Length; ++vi) {
-		//			int a = Vertices[vi], b = Vertices[(vi + 1) % Vertices.Length];
-		//			CheckOrFailF(Mesh.IsVertex(a));
-		//			CheckOrFailF(Mesh.IsVertex(b));
-		//			CheckOrFailF(Mesh.FindEdge(a, b) != DMesh3.InvalidID);
-		//			int n = 0, edge_before_b = Edges[vi], edge_after_b = Edges[(vi + 1) % Vertices.Length];
-		//			foreach(int nbr_e in Mesh.VtxEdgesItr(b)) {
-		//				if (nbr_e == edge_before_b || nbr_e == edge_after_b)
-		//					n++;
-		//			}
-		//			CheckOrFailF(n == 2);
-		//		}
-		//		return is_ok;
-		//	}
+				return true;
+			}
 
-
-
+		/// <summary>
+		/// stores vertices [starti, starti+1, ... starti+count-1] in span, and returns span, or null if invalid range
+		/// </summary>
+		std::vector<int> GetVertexSpan(int starti, int count, std::vector<int> span, bool reverse = false)
+		{
+			int N = Vertices.size();
+			if (starti < 0 || starti >= N || count > N - 1)
+				return std::vector<int>();
+			if (reverse) {
+				for (int k = 0; k < count; ++k)
+					span[count - k - 1] = Vertices[(starti + k) % N];
+			}
+			else {
+				for (int k = 0; k < count; ++k)
+					span[k] = Vertices[(starti + k) % N];
+			}
+			return span;
+		}
 
 		/// <summary>
 		/// Convert a vertex loop to an edge loop. This should be somewhere else...
