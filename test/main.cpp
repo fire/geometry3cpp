@@ -15,14 +15,13 @@
 
 using namespace g3;
 
-MeshConstraintsPtr PreserveAllBoundaryEdges(DMesh3* p_mesh)
+void PreserveAllBoundaryEdges(MeshConstraintsPtr cons, DMesh3* p_mesh)
 {
-	MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
 	if (!p_mesh) {
-		return cons;
+		return;
 	}
 	if (p_mesh->EdgeCount() <= 1) {
-		return cons;
+		return;
 	}
 	int32_t max_edge_id = p_mesh->MaxEdgeID();
 	for (int edge_id = 0; edge_id < max_edge_id; ++edge_id) {
@@ -36,7 +35,6 @@ MeshConstraintsPtr PreserveAllBoundaryEdges(DMesh3* p_mesh)
 			cons->SetOrUpdateVertexConstraint(ev.y(), vc);
 		}
 	}
-	return cons;
 }
 
 int main(int argc, char** argv) {
@@ -62,11 +60,9 @@ int main(int argc, char** argv) {
 	BlockTimer remesh_timer("remesh", true);
 	Remesher r(mesh1);
 	MeshConstraintsPtr cons;
-	cons = PreserveAllBoundaryEdges(mesh1.get());
-
+	PreserveAllBoundaryEdges(cons, mesh1.get());
 	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	// PreserveBoundaryLoops
-	//static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
+	//void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
 	//  // MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
 	//  for (int32_t loop_i = 0;;) {
 	//    DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
