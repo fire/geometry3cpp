@@ -4,9 +4,7 @@
 
 namespace g3 {
 
-
-enum class IOCode
-{
+enum class IOCode {
 	Ok = 0,
 
 	FileAccessError = 1,
@@ -23,15 +21,11 @@ enum class IOCode
 	// write errors
 	WriterError = 200,
 
-
 	// other status
 	ComputingInWorkerThread = 1000
 };
 
-
-
-class ReadOptions
-{
+class ReadOptions {
 public:
 	bool ReadMaterials;
 
@@ -40,8 +34,7 @@ public:
 	// can use this to pass arguments to them
 	//CommandArgumentSet CustomFlags = new CommandArgumentSet();
 
-	ReadOptions()
-	{
+	ReadOptions() {
 		ReadMaterials = false;
 	}
 
@@ -52,16 +45,11 @@ public:
 	};
 };
 
-
-
-
-struct IOReadResult
-{
+struct IOReadResult {
 	IOCode code;
 	std::string message;
 
-	IOReadResult(IOCode r, const std::string & s)
-	{
+	IOReadResult(IOCode r, const std::string &s) {
 		code = r;
 		message = s;
 		if (message == "")
@@ -73,19 +61,11 @@ struct IOReadResult
 	}
 };
 
-
-
-
-
-
-
-struct IOWriteResult
-{
+struct IOWriteResult {
 	IOCode code;
 	std::string message;
 
-	IOWriteResult(IOCode r, const std::string & s)
-	{
+	IOWriteResult(IOCode r, const std::string &s) {
 		code = r;
 		message = s;
 		if (message == "")
@@ -97,34 +77,29 @@ struct IOWriteResult
 	}
 };
 
+struct WriteOptions {
+	bool bWriteBinary; // write binary format if supported (STL)
 
+	bool bPerVertexNormals; // write per-vertex normals (OBJ)
+	bool bPerVertexColors; // write per-vertex colors (OBJ)
+	bool bPerVertexUVs; // write per-vertex UVs
+			// can be overridden by per-mesh UVs in WriteMesh
+	bool bWriteGroups; // write face groups (OBJ)
 
+	bool bCombineMeshes; // combine all input meshes into a single output mesh
+			// some STL readers do not handle multiple solids...
 
-struct WriteOptions
-{
-	bool bWriteBinary;        	// write binary format if supported (STL)
+	int RealPrecisionDigits; // number of digits of float precision (after decimal)
 
-	bool bPerVertexNormals;		// write per-vertex normals (OBJ)
-	bool bPerVertexColors;		// write per-vertex colors (OBJ)
-	bool bPerVertexUVs;			// write per-vertex UVs
-										// can be overridden by per-mesh UVs in WriteMesh
-	bool bWriteGroups;			// write face groups (OBJ)
+	bool bWriteMaterials; // for OBJ, indicates that .mtl file should be written
+	std::string MaterialFilePath; // only used if bWriteMaterialFile = true
 
-	bool bCombineMeshes;     	// combine all input meshes into a single output mesh
-										// some STL readers do not handle multiple solids...
+	std::string groupNamePrefix; // prefix for group names in OBJ files (default is "mmGroup")
+	std::function<std::string(int)> GroupNameF; // if non-null, you can use this to generate your own group names
 
-	int RealPrecisionDigits;		// number of digits of float precision (after decimal)
+	std::function<void(int, int)> ProgressFunc; // progress monitoring callback
 
-	bool bWriteMaterials;		// for OBJ, indicates that .mtl file should be written
-	std::string MaterialFilePath;		// only used if bWriteMaterialFile = true
-
-	std::string groupNamePrefix;        // prefix for group names in OBJ files (default is "mmGroup")
-	std::function<std::string(int)> GroupNameF;  // if non-null, you can use this to generate your own group names
-
-
-	std::function<void(int,int)> ProgressFunc;	// progress monitoring callback
-
-	std::function<std::string()> AsciiHeaderFunc;    // if you define this, returned string will be written as header start of ascii formats
+	std::function<std::string()> AsciiHeaderFunc; // if you define this, returned string will be written as header start of ascii formats
 
 	static WriteOptions Defaults() {
 		WriteOptions opt;
@@ -142,33 +117,27 @@ struct WriteOptions
 	};
 };
 
-
-
-
-class DenseUVMesh
-{
+class DenseUVMesh {
 public:
 	dvector<Vector2f> UVs;
 	dvector<Index3i> TriangleUVs;
 };
 
-
-
-struct WriteMesh
-{
+struct WriteMesh {
 	DMesh3Ptr Mesh;
-	std::string Name;         // supported by some formats
+	std::string Name; // supported by some formats
 
 	// [RMS] disable this for now
 
-	std::vector<GenericMaterialPtr> Materials;		// set of materials (possibly) used in this mesh
-	std::map<int, int> TriToMaterialMap;		// triangle index -> Materials list index
-	//IIndexMap TriToMaterialMap;			
+	std::vector<GenericMaterialPtr> Materials; // set of materials (possibly) used in this mesh
+	std::map<int, int> TriToMaterialMap; // triangle index -> Materials list index
+	//IIndexMap TriToMaterialMap;
 
-	DenseUVMesh * UVs;  // separate UV layer (just one for now)
-							 // assumption is that # of triangles in this UV mesh is same as in Mesh
+	DenseUVMesh *UVs; // separate UV layer (just one for now)
+			// assumption is that # of triangles in this UV mesh is same as in Mesh
 
-	WriteMesh(DMesh3Ptr mesh, std::string name = "") : Mesh(mesh) {
+	WriteMesh(DMesh3Ptr mesh, std::string name = "") :
+			Mesh(mesh) {
 		Name = name;
 		//UVs = nullptr;
 		//Materials = nullptr;
@@ -176,8 +145,4 @@ struct WriteMesh
 	}
 };
 
-
-
-
-
-}
+} // namespace g3

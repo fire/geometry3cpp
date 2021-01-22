@@ -1,25 +1,20 @@
 #pragma once
 #include "EdgeLoop.h"
 
+namespace g3 {
 
-namespace g3
-{
+enum class MeshBoundaryLoopsException {
+	UnclosedLoop,
+	BowtieFailure,
+	RepeatedEdge,
+};
 
-
-	enum class MeshBoundaryLoopsException
-	{
-		UnclosedLoop,
-		BowtieFailure,
-		RepeatedEdge,
-	};
-
-	/// Extract boundary EdgeLoops from Mesh. Can also extract EdgeSpans for open areas,
-	/// however default behavior is to ignore these. Set .SpanBehavior to configure.
-	class MeshBoundaryLoops : public EdgeLoop
-	{
-	public:
-		DMesh3Ptr Mesh;
-		std::list<EdgeLoopPtr> Loops;
+/// Extract boundary EdgeLoops from Mesh. Can also extract EdgeSpans for open areas,
+/// however default behavior is to ignore these. Set .SpanBehavior to configure.
+class MeshBoundaryLoops : public EdgeLoop {
+public:
+	DMesh3Ptr Mesh;
+	std::list<EdgeLoopPtr> Loops;
 
 	//	std::list<EdgeSpan> Spans;       // spans are unclosed loops
 	//	bool SawOpenSpans = false;  // will be set to true if we find any open spans
@@ -48,7 +43,6 @@ namespace g3
 	//	//// if we throw an exception, we will try to set FailureBowties, so that client
 	//	//// can try repairing these vertices
 	//	//List<int> FailureBowties = null;
-
 
 	//	MeshBoundaryLoops(DMesh3Ptr mesh, bool bAutoCompute = true)
 	//	{
@@ -83,7 +77,6 @@ namespace g3
 	//		}
 	//	}
 
-
 	//		/// <summary>
 	//		/// find pair (loop_index,in_loop_index) of vertex vID in EdgeLoops, or Index2i.Max if not found
 	//		/// </summary>
@@ -98,8 +91,6 @@ namespace g3
 	//			return Index2i.Max;
 	//		}
 
-
-
 	//		/// <summary>
 	//		/// find the loop index that contains a vertex, or return -1
 	//		/// </summary>
@@ -112,7 +103,6 @@ namespace g3
 	//			}
 	//			return -1;
 	//		}
-
 
 	//		/// <summary>
 	//		/// find the loop index that contains an edge, or return -1
@@ -127,15 +117,13 @@ namespace g3
 	//			return -1;
 	//		}
 
-
-
 	//		/// <summary>
 	//		/// Find the set of boundary EdgeLoops. Note that if we encounter topological
 	//		/// issues, we will throw MeshBoundaryLoopsException w/ more info (if possible)
 	//		/// </summary>
 	//		public bool Compute()
 	//		{
-	//			// This algorithm assumes that triangles are oriented consistently, 
+	//			// This algorithm assumes that triangles are oriented consistently,
 	//			// so closed boundary-loop can be followed by walking edges in-order
 
 	//			Loops = new List<EdgeLoop>();
@@ -213,7 +201,6 @@ namespace g3
 	//							if (EdgeFilterF(e1) == false) bdry_nbrs--;
 	//						}
 	//					}
-
 
 	//					if (bdry_nbrs < 2) {   // hit an 'endpoint' vertex (should only happen when Filter is on...)
 	//						if (SpanBehavior == SpanBehaviors.ThrowException)
@@ -345,9 +332,6 @@ namespace g3
 	//			return true;
 	//		}
 
-
-
-
 	//		// [TODO] cache this in a dictionary? we will not need very many, but we will
 	//		//   need each multiple times!
 	//		Vector3d get_vtx_normal(int vid)
@@ -359,13 +343,11 @@ namespace g3
 	//			return n;
 	//		}
 
-
-
 	//		// ok, bdry_edges[0...bdry_edges_count] contains the boundary edges coming out of bowtie_v.
 	//		// We want to pick the best one to continue the loop that came in to bowtie_v on incoming_e.
 	//		// If the loops are all sane, then we will get the smallest loops by "turning left" at bowtie_v.
 	//		// So, we compute the tangent plane at bowtie_v, and then the signed angle for each
-	//		// viable edge in this plane. 
+	//		// viable edge in this plane.
 	//		//
 	//		// [TODO] handle degenerate edges. what do we do then? Currently will only chose
 	//		//  degenerate edge if there are no other options (I think...)
@@ -405,20 +387,17 @@ namespace g3
 	//			return best_e;
 	//		}
 
-
-
 	//		struct Subloops
 	//		{
 	//			public List<EdgeLoop> Loops;
 	//			public List<EdgeSpan> Spans;
 	//		}
 
-
 	//		// This is called when loopV contains one or more "bowtie" vertices.
 	//		// These vertices *might* be duplicated in loopV (but not necessarily)
 	//		// If they are, we have to break loopV into subloops that don't contain duplicates.
 	//		//
-	//		// The list bowties contains all the possible duplicates 
+	//		// The list bowties contains all the possible duplicates
 	//		// (all v in bowties occur in loopV at least once)
 	//		//
 	//		// Currently loopE is not used, and the returned EdgeLoop objects do not have their Edges
@@ -468,9 +447,9 @@ namespace g3
 	//					}
 	//				}
 
-	//				// failed to find a simple loop. Not sure what to do in this situation. 
-	//				// If we don't want to throw, all we can do is convert the remaining 
-	//				// loop to a span and return. 
+	//				// failed to find a simple loop. Not sure what to do in this situation.
+	//				// If we don't want to throw, all we can do is convert the remaining
+	//				// loop to a span and return.
 	//				// (Or should we keep it as a loop and set flag??)
 	//				if (bv_shortest == -1) {
 	//					if (FailureBehavior == FailureBehaviors.ThrowException) {
@@ -510,7 +489,7 @@ namespace g3
 	//					dupes.Remove(bv);
 	//			}
 
-	//			// Should have one loop left that contains duplicates. 
+	//			// Should have one loop left that contains duplicates.
 	//			// Extract this as a separate loop
 	//			int nLeft = 0;
 	//			for (int i = 0; i < loopV.Count; ++i) {
@@ -533,13 +512,10 @@ namespace g3
 	//			return subs;
 	//		}
 
-
-
 	//		/*
 	//		 * In all the functions below, the list loopV is assumed to possibly
 	//		 * contain "removed" vertices indicated by -1. These are ignored.
 	//		 */
-
 
 	//		 // Check if the loop from bowtieV to bowtieV inside loopV contains any other bowtie verts.
 	//		 // Also returns start and end indices in loopV of "clean" loop
@@ -563,7 +539,6 @@ namespace g3
 	//				return false;       // not a simple bowtie loop!
 	//		}
 
-
 	//		// check if forward path from loopV[i1] to loopV[i2] contains any bowtie verts other than bowtieV
 	//		bool is_simple_path(List<int> loopV, List<int> bowties, int bowtieV, int i1, int i2)
 	//		{
@@ -577,7 +552,6 @@ namespace g3
 	//			}
 	//			return true;
 	//		}
-
 
 	//		// Read out the span from loop[i0] to loop [i1-1] into an array.
 	//		// If bMarkInvalid, then these values are set to -1 in loop
@@ -626,6 +600,5 @@ namespace g3
 	//					c++;
 	//			return c;
 	//		}
-
-	};
-}
+};
+} // namespace g3

@@ -1,51 +1,48 @@
 #pragma once
 
-#include <MeshIO.h>
 #include <DMesh3Builder.h>
-#include <parse_util.h>
+#include <MeshIO.h>
 #include <file_util.h>
+#include <parse_util.h>
 #include <string_util.h>
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 namespace g3 {
 
-
 class OBJWriter {
 public:
-
-    // stream-opener. Override to write to something other than a file.
+	// stream-opener. Override to write to something other than a file.
 	//std::function<std::ostream(std::string)> OpenStreamF = [](std::string filename) {
 	//	return std::ofstream(filename);
- //   };
+	//   };
 	//std::function<void(std::ostream&)> CloseStreamF = [](std::ostream & stream) {
 	//	// do we need to explicitly close ofstream &&
- //   };
+	//   };
 
-    std::string GroupNamePrefix = "mmGroup";   // default, compatible w/ meshmixer
-    std::function<std::string(int)> GroupNameF = nullptr;  // use this to replace standard group names w/ your own
+	std::string GroupNamePrefix = "mmGroup"; // default, compatible w/ meshmixer
+	std::function<std::string(int)> GroupNameF = nullptr; // use this to replace standard group names w/ your own
 
-    //IOWriteResult Write(BinaryWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
-    //{
-    //    // [RMS] not supported
-    //    throw new NotImplementedException();
-    //}
+	//IOWriteResult Write(BinaryWriter writer, List<WriteMesh> vMeshes, WriteOptions options)
+	//{
+	//    // [RMS] not supported
+	//    throw new NotImplementedException();
+	//}
 
-    IOWriteResult Write(std::ostream & stream, const std::vector<WriteMesh> & vMeshes, const WriteOptions & options)
-    {
-        if (! options.groupNamePrefix.empty())
-            GroupNamePrefix = options.groupNamePrefix;
-        if (options.GroupNameF != nullptr)
-            GroupNameF = options.GroupNameF;
+	IOWriteResult Write(std::ostream &stream, const std::vector<WriteMesh> &vMeshes, const WriteOptions &options) {
+		if (!options.groupNamePrefix.empty())
+			GroupNamePrefix = options.groupNamePrefix;
+		if (options.GroupNameF != nullptr)
+			GroupNameF = options.GroupNameF;
 
-        int nAccumCountV = 1;       // OBJ indices always start at 1
-        int nAccumCountUV = 1;
+		int nAccumCountV = 1; // OBJ indices always start at 1
+		int nAccumCountUV = 1;
 
 		// collect materials
 		std::string sMaterialLib = "";
 		int nHaveMaterials = 0;
-		if ( options.bWriteMaterials && options.MaterialFilePath.size() > 0 ) {
+		if (options.bWriteMaterials && options.MaterialFilePath.size() > 0) {
 			// [RMS] disabled for now
 			//List<GenericMaterial> vMaterials = MeshIOUtil.FindUniqueMaterialList(vMeshes);
 			//IOWriteResult ok = write_materials(vMaterials, options);
@@ -55,25 +52,24 @@ public:
 			//}
 		}
 
-
 		if (options.AsciiHeaderFunc != nullptr)
 			stream << options.AsciiHeaderFunc() << std::endl;
 
-		if (! sMaterialLib.empty())
+		if (!sMaterialLib.empty())
 			stream << "mtllib " << sMaterialLib << std::endl;
 
-        for (int mi = 0; mi < vMeshes.size(); ++mi) {
-            DMesh3 & mesh = * vMeshes[mi].Mesh;
+		for (int mi = 0; mi < vMeshes.size(); ++mi) {
+			DMesh3 &mesh = *vMeshes[mi].Mesh;
 
-            if (options.ProgressFunc != nullptr)
-                options.ProgressFunc(mi, (int)vMeshes.size());
+			if (options.ProgressFunc != nullptr)
+				options.ProgressFunc(mi, (int)vMeshes.size());
 
-            bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors();
-            bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals();
+			bool bVtxColors = options.bPerVertexColors && mesh.HasVertexColors();
+			bool bNormals = options.bPerVertexNormals && mesh.HasVertexNormals();
 
 			// use separate UV set if we have it, otherwise write per-vertex UVs if we have those
 			bool bVtxUVs = options.bPerVertexUVs && mesh.HasVertexUVs();
-			if ( vMeshes[mi].UVs != nullptr)
+			if (vMeshes[mi].UVs != nullptr)
 				bVtxUVs = false;
 
 			std::vector<int> mapV;
@@ -83,192 +79,180 @@ public:
 			stream << std::setprecision(digits);
 
 			// write vertices for this mesh
-            for ( int vi : mesh.VertexIndices() ) { 
+			for (int vi : mesh.VertexIndices()) {
 				mapV[vi] = nAccumCountV++;
-                Vector3d v = mesh.GetVertex(vi);
-                if ( bVtxColors ) {
-                    Vector3f c = mesh.GetVertexColor(vi);
-					stream << "v " 
-						<< std::setprecision(digits) << v[0] << " " << v[1] << " " << v[2] << " "
-						<< std::setprecision(8) << c[0] << " " << c[1] << " " << c[2] << std::endl;
+				Vector3d v = mesh.GetVertex(vi);
+				if (bVtxColors) {
+					Vector3f c = mesh.GetVertexColor(vi);
+					stream << "v "
+						   << std::setprecision(digits) << v[0] << " " << v[1] << " " << v[2] << " "
+						   << std::setprecision(8) << c[0] << " " << c[1] << " " << c[2] << std::endl;
 				} else {
 					stream << "v " << v[0] << " " << v[1] << " " << v[2] << std::endl;
 				}
 
-				if ( bNormals ) {
-                    Vector3f n = mesh.GetVertexNormal(vi);
+				if (bNormals) {
+					Vector3f n = mesh.GetVertexNormal(vi);
 					stream << "vn " << n[0] << " " << n[1] << " " << n[2] << std::endl;
-                }
+				}
 
-				if ( bVtxUVs ) {
+				if (bVtxUVs) {
 					Vector2f uv = mesh.GetVertexUV(vi);
 					stream << "vt " << uv[0] << " " << uv[1] << std::endl;
 				}
-            }
+			}
 
 			// [RMS] disabled...
 
-            // write independent UVs for this mesh, if we have them
+			// write independent UVs for this mesh, if we have them
 			//IIndexMap mapUV = (bVtxUVs) ? new IdentityIndexMap() : nullptr;
-   //         DenseUVMesh uvSet = nullptr;
-   //         if ( vMeshes[mi].UVs != nullptr) {
-   //             uvSet = vMeshes[mi].UVs;
-   //             int nUV = uvSet.UVs.Length;
+			//         DenseUVMesh uvSet = nullptr;
+			//         if ( vMeshes[mi].UVs != nullptr) {
+			//             uvSet = vMeshes[mi].UVs;
+			//             int nUV = uvSet.UVs.Length;
 			//	IndexMap fullMap = new IndexMap(false, nUV);   // [TODO] do we really need a map here? is just integer shift, no?
-   //             for (int ui = 0; ui < nUV; ++ui) {
-   //                 writer.WriteLine("vt {0:F8} {1:F8}", uvSet.UVs[ui].x, uvSet.UVs[ui].y);
+			//             for (int ui = 0; ui < nUV; ++ui) {
+			//                 writer.WriteLine("vt {0:F8} {1:F8}", uvSet.UVs[ui].x, uvSet.UVs[ui].y);
 			//		fullMap[ui] = nAccumCountUV++;
-   //             }
+			//             }
 			//	mapUV = fullMap;
-   //         }
+			//         }
 
 			// check if we need to write usemtl lines for this mesh
-			//bool bWriteMaterials = nHaveMaterials > 0 
-   //                 && vMeshes[mi].TriToMaterialMap != nullptr
-   //                 && vMeshes[mi].Materials != nullptr;
+			//bool bWriteMaterials = nHaveMaterials > 0
+			//                 && vMeshes[mi].TriToMaterialMap != nullptr
+			//                 && vMeshes[mi].Materials != nullptr;
 			bool bWriteMaterials = false;
 
-			DenseUVMesh * uvSet = nullptr;
-			std::map<int, int> * mapUV = nullptr;
+			DenseUVMesh *uvSet = nullptr;
+			std::map<int, int> *mapUV = nullptr;
 
 			// various ways we can write triangles to minimize state changes...
 			// [TODO] support writing materials when mesh has groups!!
-            if (options.bWriteGroups && mesh.HasTriangleGroups())
-                write_triangles_bygroup(stream, mesh, mapV, uvSet, mapUV, bNormals);
-            else
+			if (options.bWriteGroups && mesh.HasTriangleGroups())
+				write_triangles_bygroup(stream, mesh, mapV, uvSet, mapUV, bNormals);
+			else
 				write_triangles_flat(stream, vMeshes[mi], mapV, uvSet, mapUV, bNormals, bWriteMaterials);
 
-            if (options.ProgressFunc != nullptr)
-                options.ProgressFunc(mi+1, (int)vMeshes.size());
-        }
-
+			if (options.ProgressFunc != nullptr)
+				options.ProgressFunc(mi + 1, (int)vMeshes.size());
+		}
 
 		return IOWriteResult::Ok();
-    }
-
-
+	}
 
 	// write triangles of mesh with re-ordering to minimize group changes
 	// (note: this may mean lots of material changes, depending on mesh...)
-	void write_triangles_bygroup(std::ostream & stream, 
-		DMesh3 & mesh, std::vector<int> & mapV, 
-		DenseUVMesh * uvSet, std::map<int, int> * mapUV,
-		bool bNormals)
-    {
-        // This makes N passes over mesh indices, but doesn't use much extra memory.
-        // would there be a faster way? could construct integer-pointer-list during initial
-        // scan, this would need O(N) memory but then write is effectively O(N) instead of O(N*k)
+	void write_triangles_bygroup(std::ostream &stream,
+			DMesh3 &mesh, std::vector<int> &mapV,
+			DenseUVMesh *uvSet, std::map<int, int> *mapUV,
+			bool bNormals) {
+		// This makes N passes over mesh indices, but doesn't use much extra memory.
+		// would there be a faster way? could construct integer-pointer-list during initial
+		// scan, this would need O(N) memory but then write is effectively O(N) instead of O(N*k)
 
 		// TODO construct triangle-list pairs <tid,gid> and then sort by gid!
 
-        bool bUVs = (mapUV != nullptr);
+		bool bUVs = (mapUV != nullptr);
 
-		std::set<int> vGroups;		// std::set is sorted!
-        for (int ti : mesh.TriangleIndices())
-            vGroups.insert(mesh.GetTriangleGroup(ti));
+		std::set<int> vGroups; // std::set is sorted!
+		for (int ti : mesh.TriangleIndices())
+			vGroups.insert(mesh.GetTriangleGroup(ti));
 
-        for ( int g : vGroups ) {
-            std::string group_name = GroupNamePrefix;
-            if (GroupNameF != nullptr ) {
-                group_name = GroupNameF(g);
-            } else {
+		for (int g : vGroups) {
+			std::string group_name = GroupNamePrefix;
+			if (GroupNameF != nullptr) {
+				group_name = GroupNameF(g);
+			} else {
 				group_name = GroupNamePrefix + std::to_string(g);
-            }
+			}
 			stream << "g " << group_name << std::endl;
 
-            for (int ti : mesh.TriangleIndices() ) {
-                if (mesh.GetTriangleGroup(ti) != g)
-                    continue;
+			for (int ti : mesh.TriangleIndices()) {
+				if (mesh.GetTriangleGroup(ti) != g)
+					continue;
 
-                Index3i t = mesh.GetTriangle(ti);
+				Index3i t = mesh.GetTriangle(ti);
 				t[0] = mapV[t[0]];
 				t[1] = mapV[t[1]];
 				t[2] = mapV[t[2]];
 
-                if (bUVs) {
+				if (bUVs) {
 					Index3i tuv = (uvSet != nullptr) ? uvSet->TriangleUVs[ti] : t;
 					tuv[0] = (*mapUV)[tuv[0]];
 					tuv[1] = (*mapUV)[tuv[1]];
 					tuv[2] = (*mapUV)[tuv[2]];
 					write_tri(stream, t, bNormals, true, tuv);
-                } else {
+				} else {
 					write_tri(stream, t, bNormals, false, t);
-                }
-
-            }
-        }
-    }
-
+				}
+			}
+		}
+	}
 
 	// sequential write of input mesh triangles. preserves triangle IDs up to constant shift.
-	void write_triangles_flat(std::ostream & stream, 
-		const WriteMesh & write_mesh, std::vector<int> & mapV, 
-		DenseUVMesh * uvSet, std::map<int,int> * mapUV, 
-		bool bNormals, bool bMaterials)
-    {
-        bool bUVs = (mapUV != nullptr);
+	void write_triangles_flat(std::ostream &stream,
+			const WriteMesh &write_mesh, std::vector<int> &mapV,
+			DenseUVMesh *uvSet, std::map<int, int> *mapUV,
+			bool bNormals, bool bMaterials) {
+		bool bUVs = (mapUV != nullptr);
 
 		int cur_material = -1;
 
-		const DMesh3 & mesh = * write_mesh.Mesh;
-        for (int ti : mesh.TriangleIndices() ) { 
-			if ( bMaterials )
+		const DMesh3 &mesh = *write_mesh.Mesh;
+		for (int ti : mesh.TriangleIndices()) {
+			if (bMaterials)
 				set_current_material(stream, ti, write_mesh, cur_material);
 
-            Index3i t = mesh.GetTriangle(ti);
+			Index3i t = mesh.GetTriangle(ti);
 			t[0] = mapV[t[0]];
 			t[1] = mapV[t[1]];
 			t[2] = mapV[t[2]];
 
-            if (bUVs) {
+			if (bUVs) {
 				Index3i tuv = (uvSet != nullptr) ? uvSet->TriangleUVs[ti] : t;
-                tuv[0] = (*mapUV)[tuv[0]];
-                tuv[1] = (*mapUV)[tuv[1]];
-                tuv[2] = (*mapUV)[tuv[2]];
-                write_tri(stream, t, bNormals, true, tuv);
-            } else {
-                write_tri(stream, t, bNormals, false, t);
-            }
-        }
-    }
+				tuv[0] = (*mapUV)[tuv[0]];
+				tuv[1] = (*mapUV)[tuv[1]];
+				tuv[2] = (*mapUV)[tuv[2]];
+				write_tri(stream, t, bNormals, true, tuv);
+			} else {
+				write_tri(stream, t, bNormals, false, t);
+			}
+		}
+	}
 
 	// update material state if necessary
-	void set_current_material(std::ostream & stream, int ti, const WriteMesh & mesh, int & cur_material) 
-	{
-		int mi = mesh.TriToMaterialMap.find(ti)->second;  // because of const!
-		if ( mi != cur_material && mi >= 0 && mi < mesh.Materials.size() ) {
+	void set_current_material(std::ostream &stream, int ti, const WriteMesh &mesh, int &cur_material) {
+		int mi = mesh.TriToMaterialMap.find(ti)->second; // because of const!
+		if (mi != cur_material && mi >= 0 && mi < mesh.Materials.size()) {
 			stream << "usemtl " << mesh.Materials[mi]->name << std::endl;
 			cur_material = mi;
 		}
 	}
 
-
 	// actually write triangle line, in proper OBJ format
-    void write_tri(std::ostream & stream, const Index3i & t, bool bNormals, bool bUVs, const Index3i & tuv)
-    {
-        if ( bNormals == false && bUVs == false ) {
+	void write_tri(std::ostream &stream, const Index3i &t, bool bNormals, bool bUVs, const Index3i &tuv) {
+		if (bNormals == false && bUVs == false) {
 			stream << "f " << t[0] << " " << t[1] << " " << t[2] << std::endl;
-        } else if ( bNormals == true && bUVs == false ) {
+		} else if (bNormals == true && bUVs == false) {
 			stream << "f " << t[0] << "//" << t[0] << " "
-							<< t[1] << "//" << t[1] << " "
-							<< t[2] << "//" << t[2] << std::endl;
-        } else if ( bNormals == false && bUVs == true ) {
+				   << t[1] << "//" << t[1] << " "
+				   << t[2] << "//" << t[2] << std::endl;
+		} else if (bNormals == false && bUVs == true) {
 			stream << "f " << t[0] << "/" << tuv[0] << " "
-							<< t[1] << "/" << tuv[1] << " "
-							<< t[2] << "/" << tuv[2] << std::endl;
-        } else {
+				   << t[1] << "/" << tuv[1] << " "
+				   << t[2] << "/" << tuv[2] << std::endl;
+		} else {
 			stream << "f " << t[0] << "/" << tuv[0] << "/" << t[0] << " "
-							<< t[1] << "/" << tuv[1] << "/" << t[1] << " "
-							<< t[2] << "/" << tuv[2] << "/" << t[2] << std::endl;
-        }
-    }
-
-
+				   << t[1] << "/" << tuv[1] << "/" << t[1] << " "
+				   << t[2] << "/" << tuv[2] << "/" << t[2] << std::endl;
+		}
+	}
 
 	// [RMS] disabled for now, not critical
 
 	// write .mtl file
-/*
+	/*
 	IOWriteResult write_materials(List<GenericMaterial> vMaterials, WriteOptions options) 
 	{
         Stream stream = OpenStreamF(options.MaterialFilePath);
@@ -336,8 +320,6 @@ public:
 		return IOWriteResult.Ok;
 	}
 */
-
 };
 
-
-}
+} // namespace g3

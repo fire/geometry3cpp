@@ -15,16 +15,16 @@ using namespace g3;
 // header-only, templates, etc. This helps us find compile errors.
 
 static void test_mesh_classes() {
-  DMesh3Ptr pMesh = std::make_shared<DMesh3>();
-  DMeshAABBTree3 test(pMesh, true);
+	DMesh3Ptr pMesh = std::make_shared<DMesh3>();
+	DMeshAABBTree3 test(pMesh, true);
 
-  DMesh3Builder builder;
+	DMesh3Builder builder;
 
-  OBJReader reader;
-  OBJWriter writer;
+	OBJReader reader;
+	OBJWriter writer;
 
-  MeshConstraints mc;
-  MeshRefinerBase refbase;
+	MeshConstraints mc;
+	MeshRefinerBase refbase;
 
-  Remesher remesher(std::make_shared<DMesh3>());
+	Remesher remesher(std::make_shared<DMesh3>());
 }

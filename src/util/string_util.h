@@ -1,15 +1,14 @@
 #pragma once
 
-#include <string>
-#include <regex>
 #include <algorithm>
-#include <utility>
+#include <regex>
+#include <string>
 #include <tuple>
+#include <utility>
 
 namespace g3 {
 
-class StringUtil
-{
+class StringUtil {
 public:
 	StringUtil() = delete;
 
@@ -23,13 +22,9 @@ public:
 		return std::to_string(d);
 	}
 
-
-
-
 	/*Generalized toStdString*/
 	template <typename T>
-	static std::string toStdString(const T &rhs)
-	{
+	static std::string toStdString(const T &rhs) {
 		std::stringstream stringStream{};
 		stringStream << rhs;
 		return stringStream.str();
@@ -42,16 +37,13 @@ public:
 	static std::string toStdString(char rhs) { return std::string{ 1, rhs }; }
 
 	/*Base case to break recursion*/
-	static std::string Format(const char *formatting)
-	{
+	static std::string Format(const char *formatting) {
 		return std::string{ formatting };
 	}
 
-
 	/*C# style String.Format()*/
-	template <typename First, typename ... Args>
-	static std::string Format(const char *formatting, const First& first, const Args& ... args)
-	{
+	template <typename First, typename... Args>
+	static std::string Format(const char *formatting, const First &first, const Args &...args) {
 		/* Match exactly one opening brace, one or more numeric digit,
 		* then exactly one closing brace, identifying a token
 		* Ex: {0} will match, {-1} will not */
@@ -85,8 +77,7 @@ public:
 			try {
 				/*Convert the integer value between the opening and closing braces to an int to compare */
 				regexMatchNumericValue = std::stoi(returnString.substr(foundPosition + 1, (foundPosition + match.str().length())));
-			}
-			catch (std::exception &e) {
+			} catch (std::exception &e) {
 				/*The value between the braces was not an integer value, so throw an
 				* exception. Is this check actually necessary? I am not familiar enough with
 				* regex to know whether it is even possible to have a non-numeric value picked up */
@@ -104,13 +95,12 @@ public:
 			if ((smallestValue == -1) || (regexMatchNumericValue < smallestValue)) {
 				smallestValueInformation.clear();
 				smallestValueInformation.push_back(std::make_tuple(regexMatchNumericValue,
-					foundPosition,
-					match.str().length()));
-			}
-			else if (regexMatchNumericValue == smallestValue) {
+						foundPosition,
+						match.str().length()));
+			} else if (regexMatchNumericValue == smallestValue) {
 				smallestValueInformation.push_back(std::make_tuple(regexMatchNumericValue,
-					foundPosition,
-					match.str().length()));
+						foundPosition,
+						match.str().length()));
 			}
 			/*Set the copy string to just past the match token, so we don't accidentally
 			* match it again on the next iteration */
@@ -133,7 +123,6 @@ public:
 		for (const auto &it : smallestValueInformation) {
 			size_t smallestValueLength{ std::get<2>(it) };
 
-
 			/* Since the original string will be modified, the adjusted position must be
 			calculated for any repeated brace tokens, kept track of by index.
 			The length of string representation of first mutiplied by which the iterationn count
@@ -142,17 +131,12 @@ public:
 			size_t lengthOfTokenBracesRemoved{ index * smallestValueLength };
 			size_t lengthOfStringAdded{ index * firstString.length() };
 			size_t smallestValueAdjustedPosition{ std::get<1>(it) + lengthOfStringAdded - lengthOfTokenBracesRemoved };
-			returnString = returnString.substr(0, smallestValueAdjustedPosition)
-				+ firstString
-				+ returnString.substr(smallestValueAdjustedPosition + smallestValueLength);
+			returnString = returnString.substr(0, smallestValueAdjustedPosition) + firstString + returnString.substr(smallestValueAdjustedPosition + smallestValueLength);
 			index++;
 		}
 		/*Call template recursively with newly replaced string*/
 		return Format(returnString.c_str(), args...);
 	}
-
-
 };
 
-
-}
+} // namespace g3

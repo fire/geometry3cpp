@@ -1,41 +1,35 @@
 #pragma once
 
-#include <g3types.h>
-#include <SpatialInterfaces.h>
 #include <DMeshAABBTree3.h>
+#include <SpatialInterfaces.h>
+#include <g3types.h>
 
-namespace g3
-{
-
+namespace g3 {
 
 /// <summary>
 /// MeshProjectionTarget provides an IProjectionTarget interface to a mesh + spatial data structure.
 /// Use to project points to mesh surface.
 /// </summary>
-class MeshProjectionTarget : public IOrientedProjectionTarget
-{
+class MeshProjectionTarget : public IOrientedProjectionTarget {
 public:
 	DMesh3Ptr Mesh;
 	IMeshSpatialPtr Spatial;
 
 	~MeshProjectionTarget() {}
 
-	MeshProjectionTarget(DMesh3Ptr mesh, IMeshSpatialPtr spatial)
-	{
+	MeshProjectionTarget(DMesh3Ptr mesh, IMeshSpatialPtr spatial) {
 		Mesh = mesh;
 		Spatial = spatial;
 		if (Spatial == nullptr)
 			Spatial = std::make_shared<DMeshAABBTree3>(mesh, true);
 	}
 
-	MeshProjectionTarget(DMesh3Ptr mesh)
-	{
+	MeshProjectionTarget(DMesh3Ptr mesh) {
 		Mesh = mesh;
 		Spatial = std::make_shared<DMeshAABBTree3>(mesh, true);
 	}
 
-	virtual Vector3d Project(const Vector3d & vPoint, int identifier = -1) override
-	{
+	virtual Vector3d Project(const Vector3d &vPoint, int identifier = -1) override {
 		double fDistSqr;
 		int tNearestID = Spatial->FindNearestTriangle(vPoint, fDistSqr);
 		Vector3d v0, v1, v2;
@@ -43,12 +37,12 @@ public:
 
 		Wml::DistPoint3Triangle3d dist(vPoint, Triangle3d(v0, v1, v2));
 		double distSqr = dist.GetSquared();
-		Vector3d vProj = dist.GetClosestPoint1();;
+		Vector3d vProj = dist.GetClosestPoint1();
+		;
 		return vProj;
 	}
 
-	virtual Vector3d Project(const Vector3d & vPoint, Vector3d & vProjectNormal, int identifier = -1)
-	{
+	virtual Vector3d Project(const Vector3d &vPoint, Vector3d &vProjectNormal, int identifier = -1) {
 		double fDistSqr;
 		int tNearestID = Spatial->FindNearestTriangle(vPoint, fDistSqr);
 		Vector3d v0, v1, v2;
@@ -64,30 +58,25 @@ public:
 	/// <summary>
 	/// Automatically construct fastest projection target for mesh
 	/// </summary>
-	static MeshProjectionTarget Auto(DMesh3Ptr mesh, bool bForceCopy = true)
-	{
+	static MeshProjectionTarget Auto(DMesh3Ptr mesh, bool bForceCopy = true) {
 		if (bForceCopy)
 			return MeshProjectionTarget(std::make_shared<DMesh3>(*mesh, false, MeshComponents::None));
 		else
 			return MeshProjectionTarget(mesh);
 	}
-	static MeshProjectionTargetPtr AutoPtr(DMesh3Ptr mesh, bool bForceCopy = true)
-	{
+	static MeshProjectionTargetPtr AutoPtr(DMesh3Ptr mesh, bool bForceCopy = true) {
 		if (bForceCopy)
 			return std::make_shared<MeshProjectionTarget>(std::make_shared<DMesh3>(*mesh, false, MeshComponents::None));
 		else
 			return std::make_shared<MeshProjectionTarget>(mesh);
 	}
 
-	static MeshProjectionTarget Auto(const DMesh3 & mesh)
-	{
+	static MeshProjectionTarget Auto(const DMesh3 &mesh) {
 		return MeshProjectionTarget(std::make_shared<DMesh3>(mesh, false, MeshComponents::None));
 	}
-	static MeshProjectionTargetPtr AutoPtr(const DMesh3 & mesh)
-	{
+	static MeshProjectionTargetPtr AutoPtr(const DMesh3 &mesh) {
 		return std::make_shared<MeshProjectionTarget>(std::make_shared<DMesh3>(mesh, false, MeshComponents::None));
 	}
-
 
 	/// <summary>
 	/// Automatically construct fastest projection target for region of mesh
@@ -101,8 +90,6 @@ public:
 	//	return new MeshProjectionTarget(submesh.SubMesh);
 	//}
 };
-
-
 
 //
 ///// <summary>
@@ -218,5 +205,4 @@ public:
 //	}
 //};
 
-
-}
+} // namespace g3

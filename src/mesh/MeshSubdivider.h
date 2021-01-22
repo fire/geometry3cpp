@@ -2,8 +2,7 @@
 
 #include <DMesh3.h>
 
-namespace g3 
-{
+namespace g3 {
 
 // [TODO]
 //    - version of 1-4 that takes ROI
@@ -12,14 +11,12 @@ namespace g3
 //    - feedback for new tris/verts
 //    - reprojection (here?)
 
-class MeshSubdivider
-{
+class MeshSubdivider {
 public:
 	MeshSubdivider() {}
 	virtual ~MeshSubdivider() = default;
 
-	virtual void Split1to4(DMesh3 & mesh) 
-	{
+	virtual void Split1to4(DMesh3 &mesh) {
 		EdgeID nMaxEdge = mesh.MaxEdgeID();
 		std::vector<VertexID> vNewV(nMaxEdge, InvalidID);
 
@@ -39,8 +36,7 @@ public:
 			if (mesh.IsTriangle(k)) {
 				vTris[k] = mesh.GetTriangle(k);
 				vTriEdges[k] = mesh.GetTriEdges(k);
-			}
-			else {
+			} else {
 				vTris[k] = InvalidTri;
 				vTriEdges[k] = InvalidTri;
 			}
@@ -55,7 +51,7 @@ public:
 			}
 		}
 
-		// for each triangle, if split edge doesn't exist, then it is flipped 
+		// for each triangle, if split edge doesn't exist, then it is flipped
 		//   and we need to rotate it one more time. Should happen once per triangle.
 		for (int k = 0; k < nMaxInitialTri; ++k) {
 			if (vTriEdges[k] == InvalidTri)
@@ -76,11 +72,6 @@ public:
 			}
 		}
 	}
-
-
-
 };
 
-
-}
-
+} // namespace g3

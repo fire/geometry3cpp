@@ -1,13 +1,11 @@
 #pragma once
 
-#include <g3types.h>
 #include <DMesh3.h>
+#include <g3types.h>
 
-namespace g3 
-{
+namespace g3 {
 
-class SphereGenerator
-{
+class SphereGenerator {
 public:
 	Frame3d vFrame;
 	double fRadius;
@@ -22,7 +20,7 @@ public:
 	}
 	virtual ~SphereGenerator() = default;
 
-	virtual void Generate(DMesh3 * pMesh) {
+	virtual void Generate(DMesh3 *pMesh) {
 		GroupID gID = 0;
 
 		pMesh->AppendVertex(vFrame.ToWorldCoords(Vector3d(0, fRadius, 0)));
@@ -35,7 +33,7 @@ public:
 				double sa = std::sin(azimuth);
 				double ca = std::cos(azimuth);
 				pMesh->AppendVertex(vFrame.ToWorldCoords(
-					Vector3d(fRadius*sp*ca, fRadius*cp, fRadius*sp*sa)));
+						Vector3d(fRadius * sp * ca, fRadius * cp, fRadius * sp * sa)));
 			}
 		}
 		pMesh->AppendVertex(vFrame.ToWorldCoords(Vector3d(0, -fRadius, 0)));
@@ -49,8 +47,7 @@ public:
 		for (int j = 0; j < nStacks - 2; ++j) {
 			int aStart = j * nSlices + 1;
 			int bStart = (j + 1) * nSlices + 1;
-			for (int i = 0; i < nSlices; ++i)
-			{
+			for (int i = 0; i < nSlices; ++i) {
 				const int a = aStart + i;
 				const int a1 = aStart + (i + 1) % nSlices;
 				const int b = bStart + i;
@@ -72,6 +69,4 @@ public:
 	}
 };
 
-
-}
-
+} // namespace g3

@@ -4,7 +4,6 @@
 
 namespace g3 {
 
-
 /*
  * Wrapper around an object of type IteratorT that provides STL 
  * iterator-like semantics, that converts from the iteration type
@@ -12,18 +11,17 @@ namespace g3 {
  *
  * Conversion is done via a provided mapping function
  */
-template<typename FromType, typename ToType, typename IteratorT>
-class mapped_iterator
-{
+template <typename FromType, typename ToType, typename IteratorT>
+class mapped_iterator {
 	using MapFunctionT = std::function<ToType(FromType)>;
 
 public:
-	inline mapped_iterator() { }
+	inline mapped_iterator() {}
 
-	inline bool operator==(const mapped_iterator & r2) const {
+	inline bool operator==(const mapped_iterator &r2) const {
 		return icur == r2.icur;
 	}
-	inline bool operator!=(const mapped_iterator & r2) const {
+	inline bool operator!=(const mapped_iterator &r2) const {
 		return icur != r2.icur;
 	}
 
@@ -31,13 +29,12 @@ public:
 		return mapF(*icur);
 	}
 
-	inline const mapped_iterator & operator++() {		// prefix
+	inline const mapped_iterator &operator++() { // prefix
 		icur++;
 		return *this;
 	}
 
-	inline mapped_iterator(IteratorT cur_itr, const MapFunctionT & map_func)
-	{
+	inline mapped_iterator(IteratorT cur_itr, const MapFunctionT &map_func) {
 		icur = cur_itr;
 		mapF = map_func;
 	}
@@ -46,28 +43,21 @@ public:
 	MapFunctionT mapF;
 };
 
-
-
-
-
-
-
 /*
  * Wrapper around an existing iterator that skips over
  * values for which the filter_func returns false.
  */
-template<typename ValueType, typename IteratorT>
-class filtered_iterator
-{
+template <typename ValueType, typename IteratorT>
+class filtered_iterator {
 	using FilterFunctionT = std::function<bool(ValueType)>;
 
 public:
-	inline filtered_iterator() { }
+	inline filtered_iterator() {}
 
-	inline bool operator==(const filtered_iterator & r2) const {
+	inline bool operator==(const filtered_iterator &r2) const {
 		return icur == r2.icur;
 	}
-	inline bool operator!=(const filtered_iterator & r2) const {
+	inline bool operator!=(const filtered_iterator &r2) const {
 		return icur != r2.icur;
 	}
 
@@ -75,7 +65,7 @@ public:
 		return *icur;
 	}
 
-	inline const filtered_iterator & operator++() {		// prefix
+	inline const filtered_iterator &operator++() { // prefix
 		goto_next();
 		return *this;
 	}
@@ -86,12 +76,11 @@ public:
 		} while (icur != iend && filter_func(*icur) == false);
 	}
 
-	inline filtered_iterator(IteratorT cur_itr, IteratorT end_itr, const FilterFunctionT & filter_func)
-	{
+	inline filtered_iterator(IteratorT cur_itr, IteratorT end_itr, const FilterFunctionT &filter_func) {
 		icur = cur_itr;
 		iend = end_itr;
 		this->filter_func = filter_func;
-		if (filter_func(*icur) == false )
+		if (filter_func(*icur) == false)
 			goto_next();
 	}
 
@@ -99,15 +88,6 @@ public:
 	IteratorT iend;
 	FilterFunctionT filter_func;
 };
-
-
-
-
-
-
-
-
-
 
 /*
  * Wrapper around existing iterator that returns multiple values, of potentially
@@ -129,18 +109,17 @@ public:
  *
  * See DMesh3::VtxTrianglesItr for an example
  */
-template<typename OutputType, typename InputType, typename InputIteratorT>
-class expand_iterator
-{
-	using ExpandFunctionT = std::function<OutputType(InputType,int&)>;
+template <typename OutputType, typename InputType, typename InputIteratorT>
+class expand_iterator {
+	using ExpandFunctionT = std::function<OutputType(InputType, int &)>;
 
 public:
-	inline expand_iterator() { }
+	inline expand_iterator() {}
 
-	inline bool operator==(const expand_iterator & r2) const {
+	inline bool operator==(const expand_iterator &r2) const {
 		return icur == r2.icur;
 	}
-	inline bool operator!=(const expand_iterator & r2) const {
+	inline bool operator!=(const expand_iterator &r2) const {
 		return icur != r2.icur;
 	}
 
@@ -148,7 +127,7 @@ public:
 		return cur_value;
 	}
 
-	inline const expand_iterator & operator++() {		// prefix
+	inline const expand_iterator &operator++() { // prefix
 		goto_next();
 		return *this;
 	}
@@ -157,14 +136,13 @@ public:
 		while (icur != iend) {
 			cur_value = expand_func(*icur, cur_k);
 			if (cur_k == -1)
-				++icur;  // done with this base value
+				++icur; // done with this base value
 			else
 				break; // want caller to see current output value
 		}
 	}
 
-	inline expand_iterator(InputIteratorT cur_itr, InputIteratorT end_itr, const ExpandFunctionT & expand_func)
-	{
+	inline expand_iterator(InputIteratorT cur_itr, InputIteratorT end_itr, const ExpandFunctionT &expand_func) {
 		icur = cur_itr;
 		iend = end_itr;
 		this->expand_func = expand_func;
@@ -179,18 +157,15 @@ public:
 	ExpandFunctionT expand_func;
 };
 
-
-
 /*
  * Generic "enumerable" object that provides begin/end semantics for
  * an expand_iterator. Allows usage like for ( type x : your_expand_enumerable ) { ... }
  * You can either provide begin/end iterators, or another 
  * "enumerable" object that has begin()/end() functions.
  */
-template<typename OutputType, typename InputType, typename InputIteratorT>
-class expand_enumerable
-{
-	using ExpandFunctionT = std::function<OutputType(InputType, int&)>;
+template <typename OutputType, typename InputType, typename InputIteratorT>
+class expand_enumerable {
+	using ExpandFunctionT = std::function<OutputType(InputType, int &)>;
 
 public:
 	ExpandFunctionT expand_func;
@@ -202,7 +177,7 @@ public:
 		this->expand_func = expand_func;
 	}
 
-	template<typename IteratorSource>
+	template <typename IteratorSource>
 	expand_enumerable(IteratorSource source, ExpandFunctionT expand_func) {
 		this->begin_itr = source.begin();
 		this->end_itr = source.end();
@@ -218,9 +193,4 @@ public:
 	}
 };
 
-
-
-
-
-
-}
+} // namespace g3

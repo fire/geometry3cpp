@@ -1,13 +1,11 @@
 #pragma once
 
-#include <string>
 #include <chrono>
+#include <string>
 
-namespace g3
-{
+namespace g3 {
 
-class BlockTimer
-{
+class BlockTimer {
 	std::chrono::high_resolution_clock::time_point start_time;
 	std::chrono::high_resolution_clock::time_point end_time;
 	bool running;
@@ -15,61 +13,52 @@ class BlockTimer
 	std::chrono::nanoseconds Accumulated;
 
 public:
-	BlockTimer(const std::string & label, bool bStart)
-	{
+	BlockTimer(const std::string &label, bool bStart) {
 		Label = label;
 		running = false;
 		if (bStart)
 			Start();
 		Accumulated = std::chrono::nanoseconds::zero();
 	}
-	void Start()
-	{
+	void Start() {
 		start_time = std::chrono::high_resolution_clock::now();
 		end_time = start_time;
 		running = true;
 	}
-	void Stop()
-	{
+	void Stop() {
 		end_time = std::chrono::high_resolution_clock::now();
 		running = false;
 	}
-	bool Running()
-	{
+	bool Running() {
 		return running;
 	}
 
-	void Accumulate(bool bReset = false)
-	{
+	void Accumulate(bool bReset = false) {
 		Stop();
 		Accumulated += end_time - start_time;
 		if (bReset)
 			start_time = std::chrono::high_resolution_clock::now();
 	}
-	void Reset()
-	{
+	void Reset() {
 		Stop();
 		Start();
 	}
 
-
-    std::string AccumulatedString()
-    {
+	std::string AccumulatedString() {
 		return ToTimeString(Accumulated);
-    }
-    std::string ToString()
-    {
+	}
+	std::string ToString() {
 		return ToTimeString(end_time - start_time);
-    }
+	}
 
-    static std::string ToTimeString(std::chrono::nanoseconds span)
-    {
+	static std::string ToTimeString(std::chrono::nanoseconds span) {
 		char buf[256];
 		long milliseconds = (long)std::chrono::duration_cast<std::chrono::milliseconds>(span).count();
 		int seconds = (int)(milliseconds / 1000);
 		int minutes = (int)(milliseconds / 60000);
 		if (minutes > 0) {
-			seconds -= minutes * 60;  milliseconds -= minutes * 60000;
+			seconds -= minutes * 60;
+			milliseconds -= minutes * 60000;
 			milliseconds -= seconds * 1000;
 			sprintf(buf, "%02d:%02d.%5ld", minutes, seconds, milliseconds);
 		} else {
@@ -219,7 +208,4 @@ public:
 //	}
 //};
 
-
-
-
-}
+} // namespace g3

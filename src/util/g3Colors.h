@@ -2,11 +2,9 @@
 
 #include <g3types.h>
 
-namespace g3 
-{
+namespace g3 {
 
-class Colors
-{
+class Colors {
 public:
 	//
 	// Standard extreme-rgb colors
@@ -41,9 +39,6 @@ public:
 	static const Color4b Gold;
 	static const Color4b DarkYellow;
 	static const Color4b BlueMetal;
-
 };
 
-
-}
-
+} // namespace g3

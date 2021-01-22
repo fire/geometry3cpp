@@ -2,17 +2,14 @@
 
 #include <g3types.h>
 
-
-namespace g3
-{
+namespace g3 {
 
 //
 // This class provides an incrementable counter that we
 //   use for change tracking in various places. Many core
 //   geometry classes implement this interface.
 //
-class g3External ITimeStamped
-{
+class g3External ITimeStamped {
 public:
 	virtual ~ITimeStamped() {}
 
@@ -27,8 +24,4 @@ private:
 	unsigned int m_nTimestamp = 1;
 };
 
-
-
-
-}
-
+} // namespace g3
