@@ -139,6 +139,7 @@ int main(int argc, char** argv) {
 	int iterations = 5;
 	r.SmoothSpeedT /= iterations;
 	r.EnableParallelSmooth = true;
+	r.PreventNormalFlips = true;
 	double avg_edge_len = 0.0;
 	for (int32_t edge_i = 1; edge_i < mesh1->EdgeCount(); edge_i++) {
 		double edge_len = (mesh1->GetEdgePoint(edge_i - 1, edge_i - 1) -
