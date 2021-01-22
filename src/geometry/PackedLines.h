@@ -8,7 +8,6 @@ namespace g3 {
 
 class PackedLines : public IPackedLines {
 public:
-	PackedLines(LinesType eType = Segments);
 	virtual ~PackedLines() {}
 
 	/*

@@ -3,6 +3,7 @@
 #include "DMesh3.h"
 #include "g3types.h"
 #include <limits>
+#include <string>
 
 namespace g3 {
 // find the vtx that is the same in both ev0 and ev1
@@ -134,8 +135,9 @@ public:
 		for (int i = 0; i < Edges.size(); ++i) {
 			int a = Vertices[i], b = Vertices[(i + 1) % Vertices.size()];
 			Edges[i] = mesh->FindEdge(a, b);
-			if (Edges[i] == DMesh3::InvalidID)
-				throw std::logic_error("EdgeLoop.FromVertices: invalid edge [" + a + ',' + b + ']');
+			if (Edges[i] == DMesh3::InvalidID) {
+				throw std::logic_error("EdgeLoop.FromVertices: invalid edge [" + std::to_string(a) + ',' + std::to_string(b) + ']');
+			}
 		}
 
 		return std::make_shared<EdgeLoop>(mesh, Vertices, Edges);

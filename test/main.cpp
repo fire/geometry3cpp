@@ -12,6 +12,8 @@
 #include <VectorUtil.h>
 #include <refcount_vector.h>
 #include <small_list_set.h>
+#include "MeshboundaryLoop.h"
+#include "DCurve3.h"
 
 using namespace g3;
 
@@ -72,6 +74,16 @@ size_t RemoveFinTriangles(DMesh3Builder::PDMesh3 mesh, bool bRepeatToConvergence
 		}
 	}
 	return nRemoved;
+}
+
+
+DCurve3Ptr ExtractLoopV(DMesh3Builder::PDMesh3 mesh, std::vector<int> vertices) {
+	DCurve3Ptr curve = std::make_shared<DCurve3>();
+	for (int vid : vertices) {
+		curve->AppendVertex(mesh->GetVertex(vid));
+	}
+	curve->SetClosed(true);
+	return curve;
 }
 
 // https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs

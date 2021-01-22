@@ -2,6 +2,8 @@
 
 #include <GeometryInterfaces.h>
 #include <g3types.h>
+#include "VectorUtil.h"
+#include "g3Debug.h"
 
 namespace g3 {
 
@@ -343,8 +345,9 @@ void PackedMesh::EstimateNormals() {
 	}
 
 	unsigned int nVertices = GetVertexCount();
-	for (unsigned int k = 0; k < nVertices; ++k)
+	for (unsigned int k = 0; k < nVertices; ++k) {
 		array3f_normalize(pNormals, k);
+	}
 
 	updateTimeStamp();
 }
