@@ -101,88 +101,94 @@ namespace g3
 		}
 
 
-		//	/// <summary>
-		//	/// construct EdgeLoop from a list of vertices of mesh
-		//	/// </summary>
-		//	public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices)
-		//	{
-		//		int NV = vertices.Count;
-		//		int[] Vertices = new int[NV];
-		//		for (int i = 0; i < NV; ++i)
-		//			Vertices[i] = vertices[i];
-		//		int NE = NV;
-		//		int[] Edges = new int[NE];
-		//		for (int i = 0; i < NE; ++i) {
-		//			Edges[i] = mesh.FindEdge(Vertices[i], Vertices[(i + 1) % NE]);
-		//			if (Edges[i] == DMesh3.InvalidID)
-		//				throw new Exception("EdgeLoop.FromVertices: vertices are not connected by edge!");
-		//		}
-		//		return new EdgeLoop(mesh, Vertices, Edges, false);
-		//	}
+		/// <summary>
+		/// construct EdgeLoop from a list of vertices of mesh
+		/// </summary>
+		EdgeLoopPtr FromVertices(DMesh3Ptr mesh, std::list<int> vertices)
+		{
+			int NV = vertices.size();
+			std::vector<int> Vertices;
+			Vertices.clear();
+			for (int vertex : vertices) {
+				Vertices.push_back(vertex);
+			}
+			int NE = NV;
+			std::vector<int> Edges;
+			Edges.resize(NE);
+			for (int i = 0; i < NE; ++i) {
+				Edges[i] = mesh->FindEdge(Vertices[i], Vertices[(i + 1) % NE]);
+				if (Edges[i] == DMesh3::InvalidID) {
+					throw std::logic_error("EdgeLoop.FromVertices: vertices are not connected by edge!");
+				}
+			}
+			return std::make_shared<EdgeLoop>(mesh, Vertices, Edges);
+		}
+
+		/// <summary>
+		/// construct EdgeLoop from a list of vertices of mesh
+		/// if loop is a boundary edge, we can correct orientation if requested
+		/// </summary>
+		EdgeLoopPtr FromVertices(DMesh3Ptr mesh, std::list<int> vertices, bool bAutoOrient = true)
+		{
+			std::vector<int> Vertices;
+			for (int vertex : vertices) {
+				Vertices.push_back(vertex);
+			}
+
+			if (bAutoOrient) {
+				int a = Vertices[0], b = Vertices[1];
+				int eid = mesh->FindEdge(a, b);
+				if (mesh->IsBoundaryEdge(eid)) {
+					Index2i ev = mesh->GetOrientedBoundaryEdgeV(eid);
+					if (ev.x() == b && ev.y() == a) {
+						std::reverse(Vertices.begin(), Vertices.end());
+					}
+				}
+			}
+
+			std::vector<int> Edges;
+			Edges.resize(Vertices.size());
+			for (int i = 0; i < Edges.size(); ++i) {
+				int a = Vertices[i], b = Vertices[(i + 1) % Vertices.size()];
+				Edges[i] = mesh->FindEdge(a, b);
+				if (Edges[i] == DMesh3::InvalidID)
+					throw std::logic_error("EdgeLoop.FromVertices: invalid edge [" + a + ',' + b + ']');
+			}
+
+			return std::make_shared<EdgeLoop>(mesh, Vertices, Edges);
+		}
 
 
+		int VertexCount() {
+			return Vertices.size();
+		}
+		int EdgeCount() {
+			return Edges.size();
+		}
 
-		//	/// <summary>
-		//	/// construct EdgeLoop from a list of vertices of mesh
-		//	/// if loop is a boundary edge, we can correct orientation if requested
-		//	/// </summary>
-		//	public static EdgeLoop FromVertices(DMesh3 mesh, IList<int> vertices, bool bAutoOrient = true)
-		//	{
-		//		int[] Vertices = new int[vertices.Count];
-		//		for (int i = 0; i < Vertices.Length; i++)
-		//			Vertices[i] = vertices[i];
-
-		//		if (bAutoOrient) {
-		//			int a = Vertices[0], b = Vertices[1];
-		//			int eid = mesh.FindEdge(a, b);
-		//			if (mesh.IsBoundaryEdge(eid)) {
-		//				Index2i ev = mesh.GetOrientedBoundaryEdgeV(eid);
-		//				if (ev.a == b && ev.b == a)
-		//					Array.Reverse(Vertices);
-		//			}
-		//		}
-
-		//		int[] Edges = new int[Vertices.Length];
-		//		for (int i = 0; i < Edges.Length; ++i) {
-		//			int a = Vertices[i], b = Vertices[(i + 1) % Vertices.Length];
-		//			Edges[i] = mesh.FindEdge(a, b);
-		//			if (Edges[i] == DMesh3.InvalidID)
-		//				throw new Exception("EdgeLoop.FromVertices: invalid edge [" + a + "," + b + "]");
-		//		}
-
-		//		return new EdgeLoop(mesh, Vertices, Edges, false);
-		//	}
+		Vector3d GetVertex(int i) {
+			return Mesh->GetVertex(Vertices[i]);
+		}
 
 
-		//	public int VertexCount{
-		//		get { return Vertices.Length; }
-		//	}
-		//		public int EdgeCount{
-		//			get { return Edges.Length; }
-		//	}
-
-		//		public Vector3d GetVertex(int i) {
-		//		return Mesh.GetVertex(Vertices[i]);
-		//	}
+		AxisAlignedBox3d GetBounds()
+		{
+			AxisAlignedBox3d box;
+			for (int i = 0; i < Vertices.size(); ++i) {
+				box.Contain(Mesh->GetVertex(Vertices[i]));
+			}
+			return box;
+		}
 
 
-		//	public AxisAlignedBox3d GetBounds()
-		//	{
-		//		AxisAlignedBox3d box = AxisAlignedBox3d.Empty;
-		//		for (int i = 0; i < Vertices.Length; ++i)
-		//			box.Contain(Mesh.GetVertex(Vertices[i]));
-		//		return box;
-		//	}
-
-
-		//	public DCurve3 ToCurve(DMesh3 sourceMesh = null)
-		//	{
-		//		if (sourceMesh == null)
-		//			sourceMesh = Mesh;
-		//		DCurve3 curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
-		//		curve.Closed = true;
-		//		return curve;
-		//	}
+		//DCurve3 ToCurve(DMesh3Ptr sourceMesh)
+		//{
+		//	if (sourceMesh == null)
+		//		sourceMesh = Mesh;
+		//	DCurve3 curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
+		//	curve.Closed = true;
+		//	return curve;
+		//}
 
 
 		//	/// <summary>
@@ -409,19 +415,20 @@ namespace g3
 
 
 
-		//	/// <summary>
-		//	/// Convert a vertex loop to an edge loop. This should be somewhere else...
-		//	/// </summary>
-		//	public static int[] VertexLoopToEdgeLoop(DMesh3 mesh, int[] vertex_loop)
-		//	{
-		//		int NV = vertex_loop.Length;
-		//		int[] edges = new int[NV];
-		//		for (int i = 0; i < NV; ++i) {
-		//			int v0 = vertex_loop[i];
-		//			int v1 = vertex_loop[(i + 1) % NV];
-		//			edges[i] = mesh.FindEdge(v0, v1);
-		//		}
-		//		return edges;
-		//	}
+		/// <summary>
+		/// Convert a vertex loop to an edge loop. This should be somewhere else...
+		/// </summary>
+		std::vector<int> VertexLoopToEdgeLoop(DMesh3Ptr mesh, std::vector<int> vertex_loop)
+		{
+			int NV = vertex_loop.size();
+			std::vector<int> edges;
+			edges.resize(NV);
+			for (int i = 0; i < NV; ++i) {
+				int v0 = vertex_loop[i];
+				int v1 = vertex_loop[(i + 1) % NV];
+				edges[i] = mesh->FindEdge(v0, v1);
+			}
+			return edges;
+		}
 	};
 }
