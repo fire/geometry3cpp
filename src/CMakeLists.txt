@@ -49,13 +49,3 @@ source_group ( "geometry" FILES ${g3_geom} )
 source_group ( "spatial" FILES ${g3_spatial} )
 source_group ( "core" FILES ${g3_geomroot} )
 source_group ( "cinterface" FILES ${g3_cinterface} )
-
-
-
-# [RMS] disabled for now
-# include boost
-#target_include_directories ( geometry3 PUBLIC ${F3Boost_Include})
-
-# [RMS] disabled for now
-# include TBB
-#target_include_directories ( geometry3 PRIVATE ${F3TBB_Include} )
