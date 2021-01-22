@@ -62,6 +62,27 @@ int main(int argc, char** argv) {
 			}
 		}
 	}
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// PreserveBoundaryLoops
+	// public static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
+	//     MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
+	//     foreach ( EdgeLoop loop in loops ) {
+	//         DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
+	//         DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
+	//         ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
+	//     }
+	// }
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// preserve group-region-border-loops
+	// int set_id = 1;
+	// int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
+	// foreach (int[] tri_list in group_tri_sets) {
+	//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh, tri_list);
+	//     foreach (EdgeLoop loop in loops) {
+	//         MeshConstraintUtil.ConstrainVtxLoopTo(r, loop.Vertices, 
+	//             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
+	//     }
+	//  }
 	r.SetExternalConstraints(cons);
 	r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
 	// http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
@@ -77,6 +98,38 @@ int main(int argc, char** argv) {
 		r.BasicRemeshPass();
 		std::cout << "remesh pass " << k << std::endl;
 	}
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// RemoveFinTriangles
+	// /// <summary>
+	// /// Remove 'fin' triangles that have only one connected triangle.
+	// /// Removing one fin can create another, by default will keep iterating
+	// /// until all fins removed (in a not very efficient way!).
+	// /// Pass bRepeatToConvergence=false to only do one pass.
+	// /// [TODO] if we are repeating, construct face selection from nbrs of first list and iterate over that on future passes!
+	// /// </summary>
+	// public static int RemoveFinTriangles(DMesh3 mesh, Func<DMesh3, int, bool> removeF = null, bool bRepeatToConvergence = true)
+	// {
+	//     MeshEditor editor = new MeshEditor(mesh);
+	//     int nRemoved = 0;
+	//     List<int> to_remove = new List<int>();
+	//     repeat:
+	//     foreach ( int tid in mesh.TriangleIndices()) {
+	//         Index3i nbrs = mesh.GetTriNeighbourTris(tid);
+	//         int c = ((nbrs.a != DMesh3.InvalidID)?1:0) + ((nbrs.b != DMesh3.InvalidID)?1:0) + ((nbrs.c != DMesh3.InvalidID)?1:0);
+	//         if (c <= 1) {
+	//             if (removeF == null || removeF(mesh, tid) == true )
+	//                 to_remove.Add(tid);
+	//         }
+	//     }
+	//     if (to_remove.Count == 0)
+	//         return nRemoved;
+	//     nRemoved += to_remove.Count;
+	//     RemoveTriangles(mesh, to_remove, true);
+	//     to_remove.Clear();
+	//     if (bRepeatToConvergence)
+	//         goto repeat;
+	//     return nRemoved;
+	// }
 	remesh_timer.Stop();
 	std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
 	std::cout << mesh1->MeshInfoString();
