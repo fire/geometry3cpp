@@ -344,10 +344,12 @@ namespace g3
 				while (!bFoundGoodStart && start_i < N) {
 					Vector3d start_v = Mesh->GetVertex(start_i);
 					int count = Loop2->CountWithinTolerance(start_v, tolerance, start_j);
-					if (count == 1)
+					if (count == 1) {
+
 						bFoundGoodStart = true;
-					else
+					} else {
 						start_i++;
+					}
 				}
 				if (!bFoundGoodStart)
 					return false;       // no within-tolerance duplicate vtx to start at
