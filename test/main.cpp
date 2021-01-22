@@ -15,7 +15,7 @@
 
 using namespace g3;
 
-MeshConstraintsPtr FixAllBoundaryEdges(DMesh3 *p_mesh)
+MeshConstraintsPtr PreserveAllBoundaryEdges(DMesh3* p_mesh)
 {
 	MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
 	if (!p_mesh) {
@@ -62,7 +62,29 @@ int main(int argc, char** argv) {
 	BlockTimer remesh_timer("remesh", true);
 	Remesher r(mesh1);
 	MeshConstraintsPtr cons;
-	cons = FixAllBoundaryEdges(mesh1.get());
+	cons = PreserveAllBoundaryEdges(mesh1.get());
+
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// PreserveBoundaryLoops
+	//static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
+	//  // MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
+	//  for (int32_t loop_i = 0;;) {
+	//    DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
+	//    DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
+	//    ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
+	//  }
+	//}
+	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+	// preserve group-region-border-loops
+	// int set_id = 1;
+	// int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
+	// foreach (int[] tri_list in group_tri_sets) {
+	//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
+	//     tri_list); foreach (EdgeLoop loop in loops) {
+	//         MeshConstraintUtil.ConstrainVtxLoopTo(r, loop.Vertices,
+	//             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
+	//     }
+	//  }
 	r.SetExternalConstraints(cons);
 	r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(mesh1, true));
 	// http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
@@ -87,28 +109,6 @@ int main(int argc, char** argv) {
 		r.BasicRemeshPass();
 		std::cout << "remesh pass " << k << std::endl;
 	}
-
-	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	// PreserveBoundaryLoops
-	//static void PreserveBoundaryLoops(MeshConstraints cons, DMesh3 mesh) {
-	//  // MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
-	//  for (int32_t loop_i = 0;;) {
-	//    DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
-	//    DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
-	//    ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
-	//  }
-	//}
-	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-	// preserve group-region-border-loops
-	// int set_id = 1;
-	// int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
-	// foreach (int[] tri_list in group_tri_sets) {
-	//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
-	//     tri_list); foreach (EdgeLoop loop in loops) {
-	//         MeshConstraintUtil.ConstrainVtxLoopTo(r, loop.Vertices,
-	//             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
-	//     }
-	//  }
 	// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
 	// RemoveFinTriangles
 	// /// <summary>
