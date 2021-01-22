@@ -234,9 +234,9 @@ public:
 	/// <summary>
 	/// find index of vertex vID in Vertices list, or -1 if not found
 	/// </summary>
-	int FindVertexIndex(int vID) {
-		int N = Vertices.size();
-		for (int i = 0; i < N; ++i) {
+	size_t FindVertexIndex(int vID) {
+		size_t N = Vertices.size();
+		for (size_t i = 0; i < N; ++i) {
 			if (Vertices[i] == vID) {
 				return i;
 			}
@@ -247,11 +247,11 @@ public:
 	/// <summary>
 	/// find index of vertices of loop that is closest to point v
 	/// </summary>
-	int FindNearestVertex(Vector3d v) {
-		int iNear = -1;
+	size_t FindNearestVertex(Vector3d v) {
+		size_t iNear = -1;
 		double fNearSqr = std::numeric_limits<double>::max();
-		int N = Vertices.size();
-		for (int i = 0; i < N; ++i) {
+		size_t N = Vertices.size();
+		for (size_t i = 0; i < N; ++i) {
 			Vector3d lv = Mesh->GetVertex(Vertices[i]);
 			double d2 = (lv - v).squaredNorm();
 			if (d2 < fNearSqr) {
