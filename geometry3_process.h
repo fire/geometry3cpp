@@ -200,15 +200,11 @@ Array geometry3_process(Array p_mesh) {
   //             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
   //     }
   //  }
-  r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 5;
-  r.SmoothSpeedT = 0.5;
-  r.SmoothSpeedT /= iterations;
   r.EnableParallelSmooth = true;
-  r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   for (int32_t edge_i = 1; edge_i < g3_mesh->EdgeCount(); edge_i++) {
     double edge_len = (g3_mesh->GetEdgePoint(edge_i - 1, edge_i - 1) -
@@ -218,7 +214,7 @@ Array geometry3_process(Array p_mesh) {
     avg_edge_len /= 2.0;
   }
   print_line(String("avg edge len ") + rtos(avg_edge_len));
-  double target_edge_len = MAX(avg_edge_len, 0.08);
+  double target_edge_len = avg_edge_len * 1.0 / 10;
   print_line(String("target edge len ") + rtos(target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
   r.Precompute();
