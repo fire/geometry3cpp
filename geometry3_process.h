@@ -113,6 +113,15 @@ Array geometry3_process(Array p_mesh) {
   ::Vector<::Vector2> uv1_array = p_mesh[Mesh::ARRAY_TEX_UV];
   // ::Vector<int32_t> bones_array = p_mesh[Mesh::ARRAY_BONES];
   // ::Vector<float> weights_array = p_mesh[Mesh::ARRAY_WEIGHTS];
+  if (normal_array.size()) {    
+    g3_mesh->EnableVertexNormals(Vector3f(0.0, 1.0, 0.0));
+  }
+  if (color_array.size()) {
+    g3_mesh->EnableVertexColors(Vector3f(1.0, 1.0, 1.0));
+  }
+  if (uv1_array.size()) {
+    g3_mesh->EnableVertexUVs(Vector2f());
+  }
   for (int32_t vert_i = 0; vert_i < vertex_array.size(); vert_i++) {
     ::Vector3 vert = vertex_array[vert_i];
     ::Vector3 normal = ::Vector3(0.0, 0.0, 1.0);
@@ -127,8 +136,8 @@ Array geometry3_process(Array p_mesh) {
     if (uv1_array.size()) {
       uv1 = uv1_array[vert_i];
     }
-    VectoriDynamic bones;
-    VectorfDynamic weights;
+    // VectoriDynamic bones;
+    // VectorfDynamic weights;
     // if (bones_array.size() && bones_array.size() == vertex_array.size() * 8 &&
     //     bones_array.size() == weights_array.size()) {
     //   const int count = 8;
@@ -157,24 +166,14 @@ Array geometry3_process(Array p_mesh) {
     //                                    Vector3f(normal.x, normal.y, normal.z),
     //                                    Vector3f(color.r, color.g, color.b),
     //                                    Vector2f(uv1.x, uv1.y), bones, weights);
-    // TODO Add bone process in geom3 2021-01-23
-    // Handle collapse case with multiple bones
+    // TODO Add bone process in geom3 2021-01-23 fire
+    // Handle collapse case with multiple bones and every other case.
     NewVertexInfo info = NewVertexInfo(Vector3d(vert.x, vert.y, vert.z),
                                         Vector3f(normal.x, normal.y, normal.z),
                                         Vector3f(color.r, color.g, color.b),
-                                        Vector2f(uv1.x, uv1.y);
+                                        Vector2f(uv1.x, uv1.y));
     g3_mesh->AppendVertex(info);
   }
-  if (normal_array.size()) {
-    g3_mesh->EnableVertexNormals(Vector3f(0.0, 0.0, 1.0));
-  }
-  if (color_array.size()) {
-    g3_mesh->EnableVertexColors(Vector3f(1.0, 1.0, 1.0));
-  }
-  if (uv1_array.size()) {
-    g3_mesh->EnableVertexUVs(Vector2f());
-  }
-
   ::Vector<int32_t> index_array = p_mesh[Mesh::ARRAY_INDEX];
   for (int32_t index_i = 0; index_i < index_array.size() / 3; index_i++) {
     Index3i new_tri =
@@ -233,8 +232,8 @@ Array geometry3_process(Array p_mesh) {
   uv1_array.clear();
   normal_array.clear();
   color_array.clear();
-  bones_array.clear();
-  weights_array.clear();
+  // bones_array.clear();
+  // weights_array.clear();
 
   for (int tid : g3_mesh->TriangleIndices()) {
     Index3i tri_index = g3_mesh->GetTriangle(tid);
@@ -253,25 +252,25 @@ Array geometry3_process(Array p_mesh) {
       vertex_array.push_back(new_vert);
 
       ::Vector3 new_norm;
-      Vector3f n_float = v.v.cast<float>();
+      Vector3f n_float = v.n.cast<float>();
       new_norm.x = n_float.x();
       new_norm.y = n_float.y();
       new_norm.z = n_float.z();
       normal_array.push_back(new_norm);
 
-      ::Vector<int> new_bones;
-      VectoriDynamic bones_float = v.bones;
-      for (int bone_i = 0; bone_i < bones_float.size(); bone_i++) {
-        new_bones.push_back(bones_float[bone_i]);
-      }
-      bones_array.append_array(new_bones);
+      // ::Vector<int> new_bones;
+      // VectoriDynamic bones_float = v.bones;
+      // for (int bone_i = 0; bone_i < bones_float.size(); bone_i++) {
+      //   new_bones.push_back(bones_float[bone_i]);
+      // }
+      // bones_array.append_array(new_bones);
 
-      ::Vector<float> new_weights;
-      VectorfDynamic weights_float = v.weights;
-      for (int weight_i = 0; weight_i < weights_float.size(); weight_i++) {
-        new_weights.push_back(weights_float[weight_i]);
-      }
-      weights_array.append_array(new_weights);
+      // ::Vector<float> new_weights;
+      // VectorfDynamic weights_float = v.weights;
+      // for (int weight_i = 0; weight_i < weights_float.size(); weight_i++) {
+      //   new_weights.push_back(weights_float[weight_i]);
+      // }
+      // weights_array.append_array(new_weights);
 
       ::Vector2 new_uv1;
       Vector2f uv_float = v.uv.cast<float>();
@@ -298,10 +297,17 @@ Array geometry3_process(Array p_mesh) {
   if (color_array.size()) {
     mesh[Mesh::ARRAY_COLOR] = color_array;
   }
-  if (bones_array.size()) {
-    mesh[Mesh::ARRAY_BONES] = bones_array;
-    mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
-  }
-  return mesh;
+  // if (bones_array.size()) {
+  //   mesh[Mesh::ARRAY_BONES] = bones_array;
+  //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
+  // }
+  Ref<SurfaceTool> st;
+  st.instance();
+  st->create_from_triangle_arrays(mesh);
+  st->deindex();
+  st->index();
+  st->generate_normals(); //TODO Project Smooth normals 2021-01-21 Fire
+  st->generate_tangents();
+  return st->commit_to_arrays();
 }
 } // namespace g3

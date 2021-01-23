@@ -1169,21 +1169,21 @@ public:
 		vertices.insertAt(info.v[1], i + 1);
 		vertices.insertAt(info.v[0], i);
 
-		if (HasVertexNormals()) {
+		if (info.bHaveN) {
 			Vector3f n = (info.bHaveN) ? info.n : Vector3f::UnitY();
 			normals.insertAt(n[2], i + 2);
 			normals.insertAt(n[1], i + 1);
 			normals.insertAt(n[0], i);
 		}
 
-		if (HasVertexColors()) {
+		if (info.bHaveC) {
 			Vector3f c = (info.bHaveC) ? info.c : Vector3f::Ones();
 			colors.insertAt(c[2], i + 2);
 			colors.insertAt(c[1], i + 1);
 			colors.insertAt(c[0], i);
 		}
 
-		if (HasVertexUVs()) {
+		if (info.bHaveUV) {
 			Vector2f u = (info.bHaveUV) ? info.uv : Vector2f::Zero();
 			int j = 2 * vid;
 			uv.insertAt(u[1], j + 1);
