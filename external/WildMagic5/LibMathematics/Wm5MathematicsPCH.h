@@ -9,9 +9,4 @@
 #ifndef WM5MATHEMATICSPCH_H
 #define WM5MATHEMATICSPCH_H
 
-#ifdef WM5_USE_PRECOMPILED_HEADERS
-#include "Wm5Core.h"
-#include "Wm5Mathematics.h"
-#endif
-
 #endif

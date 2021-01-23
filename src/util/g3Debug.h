@@ -16,9 +16,10 @@ g3External void g3_debugPrint(const wchar_t *fmt, ...);
 g3External void g3_debugPrint(std::string fmt, ...);
 g3External void g3_debugPrint(std::wstring fmt, ...);
 
-#define gDevAssert g3_devAssert
-
-#define gDebugPrint g3_debugPrint
+//#define gDevAssert g3_devAssert
+#define gDevAssert
+// #define gDebugPrint g3_debugPrint
+#define gDebugPrint
 
 #define gDevAssertReturnOnFail(x, retval) \
 	if (!(x)) {                           \

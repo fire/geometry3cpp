@@ -58,8 +58,8 @@ public:
 
 	Vector4f ToFloat() const;
 	Vector4d ToDouble() const;
-	Vector3f ToFloat3() const;
-	Vector3d ToDouble3() const;
+	// Vector3f ToFloat3() const;
+	// Vector3d ToDouble3() const;
 	HexColor ToHexadecimal() const;
 
 	struct ColorMap {

@@ -160,16 +160,16 @@ Vector4d Color4b::ToDouble() const
 {
 	return Vector4d( (float)mTuple[0]/255.0f, (float)mTuple[1]/255.0f, (float)mTuple[2]/255.0f, (float)mTuple[3]/255.0f );
 }
-//----------------------------------------------------------------------------
-Vector3f Color4b::ToFloat3() const
-{
-	return Vector3f( (float)mTuple[0]/255.0f, (float)mTuple[1]/255.0f, (float)mTuple[2]/255.0f );
-}
-//----------------------------------------------------------------------------
-Vector3d Color4b::ToDouble3() const
-{
-	return Vector3d( (float)mTuple[0]/255.0f, (float)mTuple[1]/255.0f, (float)mTuple[2]/255.0f );
-}
+// //----------------------------------------------------------------------------
+// Vector3f Color4b::ToFloat3() const
+// {
+// 	return Vector3f( (float)mTuple[0]/255.0f, (float)mTuple[1]/255.0f, (float)mTuple[2]/255.0f );
+// }
+// //----------------------------------------------------------------------------
+// Vector3d Color4b::ToDouble3() const
+// {
+// 	return Vector3d( (float)mTuple[0]/255.0f, (float)mTuple[1]/255.0f, (float)mTuple[2]/255.0f );
+// }
 
 
 

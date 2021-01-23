@@ -9,8 +9,4 @@
 #ifndef WM5COREPCH_H
 #define WM5COREPCH_H
 
-#ifdef WM5_USE_PRECOMPILED_HEADERS
-#include "Wm5Core.h"
-#endif
-
 #endif

@@ -45,6 +45,10 @@ using Vector = Eigen::Matrix<T, D, 1>;
 template <typename T, int A>
 using SquareMatrix = Eigen::Matrix<T, A, A>;
 
+using VectorfDynamic = Eigen::Matrix<float, Eigen::Dynamic, 1>;
+using VectordDynamic = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using VectoriDynamic = Eigen::Matrix<int, Eigen::Dynamic, 1>;
+
 template <typename T>
 using Vector2 = Vector<T, 2>;
 typedef Vector2<float> Vector2f;
