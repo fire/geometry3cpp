@@ -32,9 +32,6 @@ public:
 	virtual Vector3d Project(const Vector3d &vPoint, int identifier = -1) override {
 		double fDistSqr;
 		int tNearestID = Spatial->FindNearestTriangle(vPoint, fDistSqr);
-		if (tNearestID == DMesh3::InvalidID) {
-			return vPoint;
-		}
 		Vector3d v0, v1, v2;
 		Mesh->GetTriVertices(tNearestID, v0, v1, v2);
 		Wml::DistPoint3Triangle3d dist(vPoint, Triangle3d(v0, v1, v2));
