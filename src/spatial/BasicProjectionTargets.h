@@ -34,9 +34,11 @@ public:
 		int tNearestID = Spatial->FindNearestTriangle(vPoint, fDistSqr);
 		Vector3d v0, v1, v2;
 		Mesh->GetTriVertices(tNearestID, v0, v1, v2);
+
 		Wml::DistPoint3Triangle3d dist(vPoint, Triangle3d(v0, v1, v2));
 		double distSqr = dist.GetSquared();
 		Vector3d vProj = dist.GetClosestPoint1();
+		;
 		return vProj;
 	}
 
