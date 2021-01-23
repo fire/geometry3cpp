@@ -204,9 +204,7 @@ Array geometry3_process(Array p_mesh) {
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 5;
-  r.SmoothSpeedT /= iterations;
   r.EnableParallelSmooth = true;
-  r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   for (int32_t edge_i = 1; edge_i < g3_mesh->EdgeCount(); edge_i++) {
     double edge_len = (g3_mesh->GetEdgePoint(edge_i - 1, edge_i - 1) -
