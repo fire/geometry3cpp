@@ -6,14 +6,9 @@ geometry3cpp is an in-progress port of [geometry3Sharp](https://github.com/gradi
 
 **WORK IN PROGRESS - HARDLY TESTED - BUYER BEWARE**
 
-
 # Goals
 
 g3cpp is intended to be a general-purpose high-level geometric computing package, with a focus on triangle mesh processing. It includes *other* math libraries which provide most of the low-level vector math stuff, solvers, etc. 
-
-I would like the library to be a header-only library. *However* the WildMagic5 dependency is currently structured to produce a compiled library, and GTEngine is also not fully header-only, there are few .cpp files. My intention is to eventually refactor these libraries so that they are fully header-only as well. 
-
-*Note: I would welcome comments about whether a header-only approach is suitable/desirable for production use.*
 
 # Current State
 
@@ -22,11 +17,6 @@ The dependencies contain an enormous amount of functionality, much more than geo
 * **DMesh3** - dynamic mesh, fully ported
 * **DMeshAABBTree3** - AABB bounding volume hierarchy for DMesh3, only nearest-point and generic traversal currently ported
 * **Remesher** - majority ported, no parallel smoothing/projection currently
-
-**Old Code** This repository has evolved from an earlier attempt (pre-geometry3Sharp) at a mesh processing library. This previous code has not been fully deleted/updated, but will be. 
-
-**goemetry3_tests** project has some basic sample code in **main.cpp**. The CMake generators add this as a separate project, and it generates a standalone executable linking to g3Cpp. If you want to just try something out, I would recommend starting here.
-
 
 # Dependencies
 
@@ -40,13 +30,7 @@ All dependencies are included in the repository, for convenience.
 
 # Building
 
-```
-mkdir build
-cmake ..
-cd build
-# os specific build like make or geometry3cpp.sln
-# execute the tests
-```
+Build this as a Godot custom module.
 
 # libigl interop
 
