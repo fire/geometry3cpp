@@ -22,7 +22,6 @@ The dependencies contain an enormous amount of functionality, much more than geo
 * **DMesh3** - dynamic mesh, fully ported
 * **DMeshAABBTree3** - AABB bounding volume hierarchy for DMesh3, only nearest-point and generic traversal currently ported
 * **Remesher** - majority ported, no parallel smoothing/projection currently
-* **OBJReader** and **OBJWriter** - functional but support for materials/texture maps is not fully ported
 
 **Old Code** This repository has evolved from an earlier attempt (pre-geometry3Sharp) at a mesh processing library. This previous code has not been fully deleted/updated, but will be. 
 
