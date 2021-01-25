@@ -343,7 +343,6 @@ Array geometry3_process(Array p_mesh) {
   st->deindex();
   st->index();
   st->generate_normals(); // TODO Project Smooth normals 2021-01-21 Fire
-  st->generate_tangents();
   return st->commit_to_arrays();
 }
 } // namespace g3
