@@ -242,7 +242,8 @@ Array geometry3_process(Array p_mesh) {
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 4;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
-  r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-01-24 FIRE
+  r.EnableParallelSmooth =
+      true; // TODO Implement parallel smooth 2021-01-24 FIRE
   r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   double min_edge_len = 0.0;
@@ -333,8 +334,17 @@ Array geometry3_process(Array p_mesh) {
   // if (bones_array.size()) {
   //   mesh[Mesh::ARRAY_BONES] = bones_array;
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
-  // }  
-	print_line("remesh took " + rtos((OS::get_singleton()->get_ticks_msec() - ticks ) * 1000.0f ));
-  return mesh;
+  // }
+
+  Ref<SurfaceTool> st;
+  st.instance();
+  st->create_from_triangle_arrays(mesh);
+  st->deindex();
+  st->index();
+  st->generate_normals(); // TODO Project Smooth normals 2021-01-21 Fire
+  st->generate_tangents();
+  print_line("remesh took " +
+             rtos((OS::get_singleton()->get_ticks_msec() - ticks) * 1000.0f));
+  return st->commit_to_arrays();
 }
 } // namespace g3
