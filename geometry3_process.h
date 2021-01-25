@@ -243,8 +243,6 @@ Array geometry3_process(Array p_mesh) {
   int iterations = 4;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SmoothSpeedT = 0.5;
-  r.EnableParallelSmooth = true;
-  r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   double min_edge_len = 0.0;
   double max_edge_len = 0.0;
@@ -258,6 +256,7 @@ Array geometry3_process(Array p_mesh) {
     r.BasicRemeshPass();
     print_line("remesh pass " + itos(k));
   }
+  print_line("remesh done");
   RemoveFinTriangles(g3_mesh, true);
   remesh_timer.Stop();
   std::cout << g3_mesh->MeshInfoString();
