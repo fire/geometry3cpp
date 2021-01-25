@@ -240,7 +240,7 @@ Array geometry3_process(Array p_mesh) {
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
-  int iterations = 5;
+  int iterations = 2;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SmoothSpeedT = 0.5;
   r.EnableParallelSmooth = true;
