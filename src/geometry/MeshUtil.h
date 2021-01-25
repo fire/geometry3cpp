@@ -26,10 +26,10 @@ inline void Scale(IPackedMesh *pMesh, float fScale) {
 	Scale(pMesh, Vector3f(fScale, fScale, fScale));
 }
 
-inline Vector3d UniformSmooth(const DMesh3 &mesh, int vID, double t) {
-	Vector3d v = mesh.GetVertex(vID);
+inline Vector3d UniformSmooth(DMesh3Ptr mesh, int vID, double t) {
+	Vector3d v = mesh->GetVertex(vID);
 	Vector3d c;
-	mesh.VtxOneRingCentroid(vID, c);
+	mesh->VtxOneRingCentroid(vID, c);
 	return (1.0 - t) * v + (t)*c;
 }
 

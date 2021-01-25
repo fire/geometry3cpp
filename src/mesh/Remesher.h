@@ -23,20 +23,20 @@ class Remesher : public MeshRefinerBase {
 	// These weights are numerically unstable if any of the triangles are degenerate.
 	// We catch these problems and return input vertex as centroid
 	// http://www.geometry.caltech.edu/pubs/DMSB_III.pdf
-	static Vector3d CotanCentroid(DMesh3 mesh, int v_i) {
+	static Vector3d CotanCentroid(DMesh3Ptr mesh, int v_i) {
 		Vector3d vSum;
 		double wSum = 0;
-		Vector3d Vi = mesh.GetVertex(v_i);
+		Vector3d Vi = mesh->GetVertex(v_i);
 
 		int v_j = DMesh3::InvalidID, opp_v1 = DMesh3::InvalidID, opp_v2 = DMesh3::InvalidID;
 		int t1 = DMesh3::InvalidID, t2 = DMesh3::InvalidID;
 		bool bAborted = false;
-		for (int eid : mesh.VtxEdgesItr(v_i)) {
+		for (int eid : mesh->VtxEdgesItr(v_i)) {
 			opp_v2 = DMesh3::InvalidID;
-			mesh.GetVtxNbrhood(eid, v_i, v_j, opp_v1, opp_v2, t1, t2);
-			Vector3d Vj = mesh.GetVertex(v_j);
+			mesh->GetVtxNbrhood(eid, v_i, v_j, opp_v1, opp_v2, t1, t2);
+			Vector3d Vj = mesh->GetVertex(v_j);
 
-			Vector3d Vo1 = mesh.GetVertex(opp_v1);
+			Vector3d Vo1 = mesh->GetVertex(opp_v1);
 			double cot_alpha_ij = VectorCot(
 					(Vi - Vo1).normalized(), (Vj - Vo1).normalized());
 			if (cot_alpha_ij == 0) {
@@ -46,7 +46,7 @@ class Remesher : public MeshRefinerBase {
 			double w_ij = cot_alpha_ij;
 
 			if (opp_v2 != DMesh3::InvalidID) {
-				Vector3d Vo2 = mesh.GetVertex(opp_v2);
+				Vector3d Vo2 = mesh->GetVertex(opp_v2);
 				double cot_beta_ij = VectorCot(
 						(Vi - Vo2).normalized(), (Vj - Vo2).normalized());
 				if (cot_beta_ij == 0) {
@@ -67,8 +67,8 @@ class Remesher : public MeshRefinerBase {
 
 public:
 	// t in range [0,1]
-	static Vector3d CotanSmooth(DMesh3 mesh, int vID, double t) {
-		Vector3d v = mesh.GetVertex(vID);
+	static Vector3d CotanSmooth(DMesh3Ptr mesh, int vID, double t) {
+		Vector3d v = mesh->GetVertex(vID);
 		Vector3d c = CotanCentroid(mesh, vID);
 		return (1 - t) * v + (t)*c;
 	}
@@ -95,7 +95,7 @@ public:
 	SmoothTypes SmoothType = SmoothTypes::Uniform;
 
 	// this overrides default smoothing if provided
-	std::function<Vector3d(const DMesh3 &, int, double)> CustomSmoothF;
+	std::function<Vector3d(DMesh3Ptr, int, double)> CustomSmoothF;
 
 	// Sometimes we need to have very granular control over what happens to
 	// specific vertices. This function allows client to specify such behavior.
@@ -578,10 +578,10 @@ protected:
 		for (int vid : mesh->VertexIndices())
 			apply_f(vid);
 	}
-	// virtual IEnumerable<int> smooth_vertices()
-	//{
-	//	return mesh->VertexIndices();
-	//}
+	DMesh3::vertex_iterator smooth_vertices()
+	{
+		return mesh->VertexIndices();
+	}
 
 	// protected virtual void FullSmoothPass_InPlace(bool bParallel) {
 	//       Func<DMesh3, int, double, Vector3d> smoothFunc =
@@ -612,7 +612,7 @@ protected:
 	virtual void FullSmoothPass_Buffer(bool bParallel) {
 		InitializeVertexBufferForPass();
 
-		std::function<Vector3d(const DMesh3 &, int, double)> smoothFunc =
+		std::function<Vector3d(DMesh3Ptr, int, double)> smoothFunc =
 				UniformSmooth;
 		if (CustomSmoothF != nullptr) {
 			smoothFunc = CustomSmoothF;
@@ -630,13 +630,14 @@ protected:
 				vBufferV[vID] = vSmoothed;
 			}
 		};
-
-		// if (bParallel) {
+		// TODO 2021-01-24 Add back parallel
+		if (false && bParallel) {
 		//    gParallel.ForEach<int>(smooth_vertices(), smooth);
-		//} else {
-		//    foreach (int vID in smooth_vertices())
-		//        smooth(vID);
-		//}
+		} else {
+		   for(int vID : smooth_vertices()) {
+		       smooth(vID);
+		   }
+		}
 		apply_to_smooth_vertices(smooth);
 
 		ApplyVertexBuffer(bParallel);

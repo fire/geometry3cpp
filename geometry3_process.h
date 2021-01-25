@@ -240,17 +240,17 @@ Array geometry3_process(Array p_mesh) {
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
-  int iterations = 4;
+  int iterations = 32;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SmoothSpeedT = 0.5;
-  r.EnableParallelSmooth = true;
+  r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-01-24 FIRE
   r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   double min_edge_len = 0.0;
   double max_edge_len = 0.0;
   EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
   print_line(String("avg edge len ") + rtos(avg_edge_len));
-  double target_edge_len = avg_edge_len * 0.95;
+  double target_edge_len = avg_edge_len * 0.5;
   print_line(String("target edge len ") + rtos(target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
   r.Precompute();
