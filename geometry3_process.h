@@ -141,7 +141,7 @@ static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
 }
 
 Array geometry3_process(Array p_mesh) {
-  BlockTimer remesh_timer("remesh", true);
+  uint32_t ticks = OS::get_singleton()->get_ticks_msec();
   g3::DMesh3Ptr g3_mesh = std::make_shared<DMesh3>();
 
   ::Vector<::Vector3> vertex_array = p_mesh[Mesh::ARRAY_VERTEX];
@@ -333,9 +333,8 @@ Array geometry3_process(Array p_mesh) {
   // if (bones_array.size()) {
   //   mesh[Mesh::ARRAY_BONES] = bones_array;
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
-  // }
-  remesh_timer.Stop();
-	std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
+  // }  
+	print_line("remesh took " + rtos((OS::get_singleton()->get_ticks_msec() - ticks ) / 1000.0f ));
   return mesh;
 }
 } // namespace g3
