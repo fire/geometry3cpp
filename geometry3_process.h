@@ -140,6 +140,21 @@ static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
   avgEdgeLen /= (double)avg_count;
 }
 
+// PreserveBoundaryLoops(cons, g3_mesh);
+// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+// void preserve_group_region_border_loops(DMesh3Ptr mesh) {
+//   int set_id = 1;
+//   int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
+//   for (int[] tri_list : group_tri_sets) {
+//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh, tri_list);
+//     foreach (EdgeLoop loop in loops) {
+//       MeshConstraintUtil.ConstrainVtxLoopTo(
+//           r, loop.Vertices, new DCurveProjectionTarget(loop.ToCurve()),
+//           set_id++);
+//     }
+//   }
+// }
+
 Array geometry3_process(Array p_mesh) {
   uint32_t ticks = OS::get_singleton()->get_ticks_msec();
   g3::DMesh3Ptr g3_mesh = std::make_shared<DMesh3>();
@@ -223,19 +238,7 @@ Array geometry3_process(Array p_mesh) {
   std::cout << g3_mesh->MeshInfoString();
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
-  PreserveAllBoundaryEdges(cons, g3_mesh);
-  // PreserveBoundaryLoops
-  // https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-  // preserve group-region-border-loops
-  // int set_id = 1;
-  // int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
-  // foreach (int[] tri_list in group_tri_sets) {
-  //     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
-  //     tri_list); foreach (EdgeLoop loop in loops) {
-  //         MeshConstraintUtil.ConstrainVtxLoopTo(r, loop.Vertices,
-  //             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
-  //     }
-  //  }
+  // PreserveAllBoundaryEdges(cons, g3_mesh);
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
@@ -333,8 +336,9 @@ Array geometry3_process(Array p_mesh) {
   // if (bones_array.size()) {
   //   mesh[Mesh::ARRAY_BONES] = bones_array;
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
-  // }  
-	print_line("remesh took " + rtos((OS::get_singleton()->get_ticks_msec() - ticks ) * 1000.0f ));
+  // }
+  print_line("remesh took " +
+             rtos((OS::get_singleton()->get_ticks_msec() - ticks) * 1000.0f));
   return mesh;
 }
 } // namespace g3

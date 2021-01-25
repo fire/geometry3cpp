@@ -137,7 +137,7 @@ struct Segment3d {
 		return new Segment3d(this.Center, this.Direction, this.Extent);
 	}
 
-}
+};
 
 struct Segment3f {
 	// Center-direction-extent representation.
