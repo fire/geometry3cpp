@@ -240,7 +240,7 @@ Array geometry3_process(Array p_mesh) {
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
-  int iterations = 2;
+  int iterations = 4;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SmoothSpeedT = 0.5;
   r.EnableParallelSmooth = true;
@@ -250,7 +250,7 @@ Array geometry3_process(Array p_mesh) {
   double max_edge_len = 0.0;
   EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
   print_line(String("avg edge len ") + rtos(avg_edge_len));
-  double target_edge_len = avg_edge_len * 0.90;
+  double target_edge_len = avg_edge_len * 0.95;
   print_line(String("target edge len ") + rtos(target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
   r.Precompute();
@@ -342,6 +342,7 @@ Array geometry3_process(Array p_mesh) {
   st->deindex();
   st->index();
   st->generate_normals(); // TODO Project Smooth normals 2021-01-21 Fire
+  st->generate_tangents();
   return st->commit_to_arrays();
 }
 } // namespace g3
