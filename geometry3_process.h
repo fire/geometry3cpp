@@ -141,6 +141,7 @@ static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
 }
 
 Array geometry3_process(Array p_mesh) {
+  BlockTimer remesh_timer("remesh", true);
   g3::DMesh3Ptr g3_mesh = std::make_shared<DMesh3>();
 
   ::Vector<::Vector3> vertex_array = p_mesh[Mesh::ARRAY_VERTEX];
@@ -220,7 +221,6 @@ Array geometry3_process(Array p_mesh) {
     g3_mesh->AppendTriangle(new_tri);
   }
   std::cout << g3_mesh->MeshInfoString();
-  BlockTimer remesh_timer("remesh", true);
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
   PreserveAllBoundaryEdges(cons, g3_mesh);
@@ -259,8 +259,6 @@ Array geometry3_process(Array p_mesh) {
   }
   print_line("remesh done");
   RemoveFinTriangles(g3_mesh, true);
-  remesh_timer.Stop();
-  std::cout << g3_mesh->MeshInfoString();
 
   vertex_array.clear();
   index_array.clear();
@@ -336,6 +334,8 @@ Array geometry3_process(Array p_mesh) {
   //   mesh[Mesh::ARRAY_BONES] = bones_array;
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
   // }
+  remesh_timer.Stop();
+	std::cout << "remesh took " << remesh_timer.ToString() << std::endl;
   return mesh;
 }
 } // namespace g3
