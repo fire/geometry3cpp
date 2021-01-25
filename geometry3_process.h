@@ -106,6 +106,40 @@ void PreserveBoundaryLoops(g3::MeshConstraintsPtr cons, g3::DMesh3Ptr mesh) {
   //}
 }
 
+static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
+                            double &maxEdgeLen, double &avgEdgeLen,
+                            int samples = 0) {
+  minEdgeLen = std::numeric_limits<double>::max();
+  maxEdgeLen = std::numeric_limits<double>::max();
+  avgEdgeLen = 0;
+  int avg_count = 0;
+  int MaxID = mesh->MaxEdgeID();
+
+  // if we are only taking some samples, use a prime-modulo-loop instead of
+  // random
+  int nPrime = (samples == 0) ? 1 : nPrime = 31337;
+  int max_count = (samples == 0) ? MaxID : samples;
+
+  Vector3d a, b;
+  int eid = 0;
+  int count = 0;
+  do {
+    if (mesh->IsEdge(eid)) {
+      mesh->GetEdgeV(eid, a, b);
+      double len = (b - a).norm();
+      if (len < minEdgeLen)
+        minEdgeLen = len;
+      if (len > maxEdgeLen)
+        maxEdgeLen = len;
+      avgEdgeLen += len;
+      avg_count++;
+    }
+    eid = (eid + nPrime) % MaxID;
+  } while (eid != 0 && count++ < max_count);
+
+  avgEdgeLen /= (double)avg_count;
+}
+
 Array geometry3_process(Array p_mesh) {
   g3::DMesh3Ptr g3_mesh = std::make_shared<DMesh3>();
 
@@ -115,7 +149,7 @@ Array geometry3_process(Array p_mesh) {
   ::Vector<::Vector2> uv1_array = p_mesh[Mesh::ARRAY_TEX_UV];
   // ::Vector<int32_t> bones_array = p_mesh[Mesh::ARRAY_BONES];
   // ::Vector<float> weights_array = p_mesh[Mesh::ARRAY_WEIGHTS];
-  if (normal_array.size()) {    
+  if (normal_array.size()) {
     g3_mesh->EnableVertexNormals(Vector3f(0.0, 1.0, 0.0));
   }
   if (color_array.size()) {
@@ -140,7 +174,8 @@ Array geometry3_process(Array p_mesh) {
     }
     // VectoriDynamic bones;
     // VectorfDynamic weights;
-    // if (bones_array.size() && bones_array.size() == vertex_array.size() * 8 &&
+    // if (bones_array.size() && bones_array.size() == vertex_array.size() * 8
+    // &&
     //     bones_array.size() == weights_array.size()) {
     //   const int count = 8;
     //   bones.resize(count);
@@ -165,15 +200,16 @@ Array geometry3_process(Array p_mesh) {
     //   }
     // }
     // NewVertexInfo info = NewVertexInfo(Vector3d(vert.x, vert.y, vert.z),
-    //                                    Vector3f(normal.x, normal.y, normal.z),
-    //                                    Vector3f(color.r, color.g, color.b),
-    //                                    Vector2f(uv1.x, uv1.y), bones, weights);
+    //                                    Vector3f(normal.x, normal.y,
+    //                                    normal.z), Vector3f(color.r, color.g,
+    //                                    color.b), Vector2f(uv1.x, uv1.y),
+    //                                    bones, weights);
     // TODO Add bone process in geom3 2021-01-23 fire
     // Handle collapse case with multiple bones and every other case.
     NewVertexInfo info = NewVertexInfo(Vector3d(vert.x, vert.y, vert.z),
-                                        Vector3f(normal.x, normal.y, normal.z),
-                                        Vector3f(color.r, color.g, color.b),
-                                        Vector2f(uv1.x, uv1.y));
+                                       Vector3f(normal.x, normal.y, normal.z),
+                                       Vector3f(color.r, color.g, color.b),
+                                       Vector2f(uv1.x, uv1.y));
     g3_mesh->AppendVertex(info);
   }
   ::Vector<int32_t> index_array = p_mesh[Mesh::ARRAY_INDEX];
@@ -200,22 +236,21 @@ Array geometry3_process(Array p_mesh) {
   //             new DCurveProjectionTarget(loop.ToCurve()), set_id++);
   //     }
   //  }
+  r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 5;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
+  r.SmoothSpeedT = 0.5;
   r.EnableParallelSmooth = true;
+  r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
-  for (int32_t edge_i = 1; edge_i < g3_mesh->EdgeCount(); edge_i++) {
-    double edge_len = (g3_mesh->GetEdgePoint(edge_i - 1, edge_i - 1) -
-                       g3_mesh->GetEdgePoint(edge_i - 1, edge_i))
-                          .norm();
-    avg_edge_len += edge_len;
-    avg_edge_len /= 2.0;
-  }
+  double min_edge_len = 0.0;
+  double max_edge_len = 0.0;
+  EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
   print_line(String("avg edge len ") + rtos(avg_edge_len));
-  double target_edge_len = MAX(avg_edge_len * 1.0 / 10, 0.08);
+  double target_edge_len = avg_edge_len * 0.5;
   print_line(String("target edge len ") + rtos(target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
   r.Precompute();
@@ -306,8 +341,7 @@ Array geometry3_process(Array p_mesh) {
   st->create_from_triangle_arrays(mesh);
   st->deindex();
   st->index();
-  st->generate_normals(); //TODO Project Smooth normals 2021-01-21 Fire
-  st->generate_tangents();
+  st->generate_normals(); // TODO Project Smooth normals 2021-01-21 Fire
   return st->commit_to_arrays();
 }
 } // namespace g3
