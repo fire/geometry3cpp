@@ -342,7 +342,6 @@ Array geometry3_process(Array p_mesh) {
   st->deindex();
   st->index();
   st->generate_normals(); // TODO Project Smooth normals 2021-01-21 Fire
-  st->generate_tangents();
   print_line("remesh took " +
              rtos((OS::get_singleton()->get_ticks_msec() - ticks) * 1000.0f));
   return st->commit_to_arrays();
