@@ -242,7 +242,6 @@ Array geometry3_process(Array p_mesh) {
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 32;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
-  r.SmoothSpeedT = 0.5;
   r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-01-24 FIRE
   r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
