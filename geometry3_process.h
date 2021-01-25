@@ -258,6 +258,7 @@ Array geometry3_process(Array p_mesh) {
     r.BasicRemeshPass();
     print_line("remesh pass " + itos(k));
   }
+  print_line("remesh done");
   RemoveFinTriangles(g3_mesh, true);
   remesh_timer.Stop();
   std::cout << g3_mesh->MeshInfoString();
