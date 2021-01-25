@@ -17,13 +17,16 @@
 #include <VectorUtil.h>
 #include <algorithm>
 #include <limits>
+#include <list>
 #include <refcount_vector.h>
 #include <small_list_set.h>
 
 #include "../../godot/scene/resources/surface_tool.h"
 #include "geometry3_process.h"
+#include "src/geometry/MeshboundaryLoop.h"
 #include "src/mesh/DMesh3.h"
 #include "src/mesh/MeshConstraints.h"
+#include "src/spatial/DCurveProject.h"
 
 namespace g3 {
 void PreserveAllBoundaryEdges(g3::MeshConstraintsPtr cons,
@@ -87,23 +90,71 @@ size_t RemoveFinTriangles(g3::DMesh3Ptr mesh,
   return nRemoved;
 }
 
-// DCurve3Ptr ExtractLoopV(g3::DMesh3Builder::PDMesh3 mesh, std::vector<int>
-// vertices) { 	DCurve3Ptr curve = std::make_shared<DCurve3>(); 	for (int
-// vid :
-// vertices) { 		curve->AppendVertex(mesh->GetVertex(vid));
-//	}
-//	curve->SetClosed(true);
-//	return curve;
-//}
+DCurve3Ptr ExtractLoopV(g3::DMesh3Ptr mesh, std::vector<int> vertices) {
+  DCurve3Ptr curve = std::make_shared<DCurve3>();
+  for (int vid : vertices) {
+    curve->AppendVertex(mesh->GetVertex(vid));
+  }
+  curve->SetClosed(true);
+  return curve;
+}
+
+// for all vertices in loopV, constrain to target
+// for all edges in loopV, disable flips and constrain to target
+static void ConstrainVtxLoopToMesh(MeshConstraintsPtr cons, DMesh3Ptr mesh,
+                                   std::list<int> loopV,
+                                   IProjectionTargetPtr target,
+                                   int setID = -1) {
+  VertexConstraint vc = VertexConstraint(target);
+  int N = loopV.size();
+  for (int i = 0; i < N; ++i) {
+    std::list<int>::iterator it = loopV.begin();
+    std::advance(it, i);
+    cons->SetOrUpdateVertexConstraint(*it, vc);
+  }
+
+  EdgeConstraint ec = EdgeConstraint(EdgeRefineFlags::NoFlip, target);
+  ec.TrackingSetID = setID;
+  for (int i = 0; i < N; ++i) {
+    std::list<int>::iterator it = loopV.begin();
+    std::advance(it, i);
+    int v0 = *it;
+    it = loopV.begin();
+    std::advance(it, (i + 1) % N);
+    int v1 = *it;
+
+    int eid = mesh->FindEdge(v0, v1);
+    if (eid == DMesh3::InvalidID) {
+      return;
+    }
+    cons->SetOrUpdateEdgeConstraint(eid, ec);
+  }
+}
+static void ConstrainVtxLoopTo(Remesher r, std::vector<int> loopV,
+                               IProjectionTargetPtr target, int setID = -1) {
+  if (r.Constraints() == nullptr) {
+    r.SetExternalConstraints(std::make_shared<MeshConstraints>());
+  }
+  std::list<int> loop_list_verts;
+  for (int index : loopV) {
+    loop_list_verts.push_back(index);
+  }
+  ConstrainVtxLoopToMesh(r.Constraints(), r.Mesh(), loop_list_verts, target);
+}
 
 // https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
 void PreserveBoundaryLoops(g3::MeshConstraintsPtr cons, g3::DMesh3Ptr mesh) {
-  // MeshBoundaryLoops loops = new MeshBoundaryLoops(mesh);
-  // for (int32_t loop_i = 0;;) {
-  //	DCurve3 loopC = MeshUtil.ExtractLoopV(mesh, loop.Vertices);
-  //	DCurveProjectionTarget target = new DCurveProjectionTarget(loopC);
-  //	ConstrainVtxLoopTo(cons, mesh, loop.Vertices, target);
-  //}
+  std::list<g3::EdgeLoopPtr> loops = MeshBoundaryLoops(mesh).Loops;
+  for (EdgeLoopPtr loop : loops) {
+    DCurve3Ptr loopC = ExtractLoopV(mesh, loop->Vertices);
+    IProjectionTargetPtr target =
+        std::make_shared<DCurveProjectionTarget>(loopC);
+    std::list<int> loop_verts;
+    for (int index : loop->Vertices) {
+      loop_verts.push_back(index);
+    }
+    ConstrainVtxLoopToMesh(cons, mesh, loop_verts, target);
+  }
 }
 
 static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
@@ -140,14 +191,13 @@ static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
   avgEdgeLen /= (double)avg_count;
 }
 
-// PreserveBoundaryLoops(cons, g3_mesh);
 // https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
 // void preserve_group_region_border_loops(DMesh3Ptr mesh) {
 //   int set_id = 1;
 //   int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
 //   for (int[] tri_list : group_tri_sets) {
-//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh, tri_list);
-//     foreach (EdgeLoop loop in loops) {
+//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
+//     tri_list); foreach (EdgeLoop loop in loops) {
 //       MeshConstraintUtil.ConstrainVtxLoopTo(
 //           r, loop.Vertices, new DCurveProjectionTarget(loop.ToCurve()),
 //           set_id++);
@@ -242,10 +292,12 @@ Array geometry3_process(Array p_mesh) {
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
+  PreserveBoundaryLoops(cons, g3_mesh);
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 4;
   r.SmoothType = Remesher::SmoothTypes::Cotan;
-  r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-01-24 FIRE
+  r.EnableParallelSmooth =
+      true; // TODO Implement parallel smooth 2021-01-24 FIRE
   r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   double min_edge_len = 0.0;

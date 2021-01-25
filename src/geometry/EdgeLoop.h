@@ -40,13 +40,13 @@ typedef std::shared_ptr<EdgeLoop> EdgeLoopPtr;
 /// If all you have are the vertices, use EdgeLoop.VertexLoopToEdgeLoop() to construct an EdgeLoop
 /// </summary>
 class EdgeLoop {
+public:
 	DMesh3Ptr Mesh;
 
 	std::vector<int> Vertices;
 	std::vector<int> Edges;
 	std::vector<int> BowtieVertices; // this may not be initialized!
 
-public:
 	EdgeLoop(DMesh3Ptr mesh) {
 		Mesh = mesh;
 	}

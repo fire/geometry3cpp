@@ -16,10 +16,9 @@ struct Segment3d {
 	double Extent;
 
 	Segment3d(Vector3d p0, Vector3d p1) {
-		//update_from_endpoints(p0, p1);
 		Center = 0.5 * (p0 + p1);
 		Direction = p1 - p0;
-		Extent = 0.5 * Direction.normalize();
+		Extent = 0.5 * Direction.norm();
 	}
 	Segment3d(Vector3d center, Vector3d direction, double extent) {
 		Center = center;
@@ -27,10 +26,10 @@ struct Segment3d {
 		Extent = extent;
 	}
 
-	void update_from_endpoints(Vector3f p0, Vector3f p1) {
-		Center = 0.5f * (p0 + p1);
+	void update_from_endpoints(Vector3d p0, Vector3d p1) {
+		Center = 0.5 * (p0 + p1);
 		Direction = p1 - p0;
-		Extent = 0.5f * Direction.normalize();
+		Extent = 0.5 * Direction.norm();
 	}
 
 	void SetEndpoints(Vector3d p0, Vector3d p1) {
@@ -64,26 +63,26 @@ struct Segment3d {
 	}
 
 	double DistanceSquared(Vector3d p) {
-		double t = (p - Center).Dot(Direction);
+		double t = (p - Center).dot(Direction);
 		if (t >= Extent)
-			return GetP1().DistanceSquared(p);
+			return (p - GetP1()).squaredNorm();
 		else if (t <= -Extent)
-			return GetP0().DistanceSquared(p);
+			return (p - GetP0()).squaredNorm();
 		Vector3d proj = Center + t * Direction;
-		return (proj - p).LengthSquared;
+		return (proj - p).squaredNorm();
 	}
 
 	double DistanceSquared(Vector3d p, double &t) {
 		t = (p - Center).dot(Direction);
 		if (t >= Extent) {
 			t = Extent;
-			return GetP1().DistanceSquared(p);
+			return (p - GetP1()).squaredNorm();
 		} else if (t <= -Extent) {
 			t = -Extent;
-			return GetP0().DistanceSquared(p);
+			return (p - GetP0()).squaredNorm();
 		}
 		Vector3d proj = Center + t * Direction;
-		return (proj - p).LengthSquared;
+		return (proj - p).squaredNorm();
 	}
 
 	Vector3d NearestPoint(Vector3d p) {
@@ -117,101 +116,100 @@ struct Segment3d {
 		return Direction;
 	}
 
-	bool HasArcLength {
-		get { return true; }
+	bool HasArcLength() {
+		return true;
 	}
 
-	double ArcLength {
-		get { return 2 * Extent; }
-	}
-
-	Vector3d SampleArcLength(double a) {
-		return P0 + a * Direction;
-	}
-
-	void Reverse() {
-		update_from_endpoints(P1, P0);
-	}
-
-	IParametricCurve3d Clone() {
-		return new Segment3d(this.Center, this.Direction, this.Extent);
-	}
-
-};
-
-struct Segment3f {
-	// Center-direction-extent representation.
-	// Extent is half length of segment
-	Vector3f Center;
-	Vector3f Direction;
-	float Extent;
-
-	Segment3f(Vector3f p0, Vector3f p1) {
-		//update_from_endpoints(p0, p1);
-		Center = 0.5f * (p0 + p1);
-		Direction = p1 - p0;
-		Extent = 0.5f * Direction.normalized();
-	}
-	Segment3f(Vector3f center, Vector3f direction, float extent) {
-		Center = center;
-		Direction = direction;
-		Extent = extent;
-	}
-
-	void SetEndpoints(Vector3f p0, Vector3f p1) {
-		update_from_endpoints(p0, p1);
-	}
-
-	Vector3f GetP0() {
-		 return Center - Extent * Direction; 
-	}
-	Vector3f GetP1() {
-		 return Center + Extent * Direction; 
-	}
-	Vector3f SetP0(Vector3f value) {
-		 update_from_endpoints(value, GetP1()); 
-	}
-	Vector3f SetP1(Vector3f value) {
-		 update_from_endpoints(GetP0(), value); 
-	}
-	float Length() {
+	double ArcLength() {
 		return 2 * Extent;
 	}
 
-	// parameter is signed distance from center in direction
-	Vector3f PointAt(float d) {
-		return Center + d * Direction;
+	Vector3d SampleArcLength(double a) {
+		return GetP0() + a * Direction;
 	}
 
-	// t ranges from [0,1] over [P0,P1]
-	Vector3f PointBetween(float t) {
-		return Center + (2 * t - 1) * Extent * Direction;
+	void Reverse() {
+		update_from_endpoints(GetP1(), GetP0());
 	}
 
-	float DistanceSquared(Vector3f p) {
-		float t = (p - Center).dot(Direction);
-		if (t >= Extent)
-			return P1.DistanceSquared(p);
-		else if (t <= -Extent)
-			return P0.DistanceSquared(p);
-		Vector3f proj = Center + t * Direction;
-		return (proj - p).LengthSquared;
+	Segment3d Clone() {
+		return Segment3d(Center, Direction, Extent);
 	}
+};
 
-	Vector3f NearestPoint(Vector3f p) {
-		float t = (p - Center).Dot(Direction);
-		if (t >= Extent)
-			return P1;
-		if (t <= -Extent)
-			return P0;
-		return Center + t * Direction;
-	}
+// struct Segment3f {
+// 	// Center-direction-extent representation.
+// 	// Extent is half length of segment
+// 	Vector3f Center;
+// 	Vector3f Direction;
+// 	float Extent;
 
-	float Project(Vector3f p) {
-		return (p - Center).Dot(Direction);
-	}
+// 	Segment3f(Vector3f p0, Vector3f p1) {
+// 		//update_from_endpoints(p0, p1);
+// 		Center = 0.5f * (p0 + p1);
+// 		Direction = p1 - p0;
+// 		Extent = 0.5f * Direction.normalized();
+// 	}
+// 	Segment3f(Vector3f center, Vector3f direction, float extent) {
+// 		Center = center;
+// 		Direction = direction;
+// 		Extent = extent;
+// 	}
 
-}
+// 	void SetEndpoints(Vector3f p0, Vector3f p1) {
+// 		update_from_endpoints(p0, p1);
+// 	}
+
+// 	Vector3f GetP0() {
+// 		 return Center - Extent * Direction; 
+// 	}
+// 	Vector3f GetP1() {
+// 		 return Center + Extent * Direction; 
+// 	}
+// 	Vector3f SetP0(Vector3f value) {
+// 		 update_from_endpoints(value, GetP1()); 
+// 	}
+// 	Vector3f SetP1(Vector3f value) {
+// 		 update_from_endpoints(GetP0(), value); 
+// 	}
+// 	float Length() {
+// 		return 2 * Extent;
+// 	}
+
+// 	// parameter is signed distance from center in direction
+// 	Vector3f PointAt(float d) {
+// 		return Center + d * Direction;
+// 	}
+
+// 	// t ranges from [0,1] over [P0,P1]
+// 	Vector3f PointBetween(float t) {
+// 		return Center + (2 * t - 1) * Extent * Direction;
+// 	}
+
+// 	float DistanceSquared(Vector3f p) {
+// 		float t = (p - Center).dot(Direction);
+// 		if (t >= Extent)
+// 			return P1.DistanceSquared(p);
+// 		else if (t <= -Extent)
+// 			return P0.DistanceSquared(p);
+// 		Vector3f proj = Center + t * Direction;
+// 		return (proj - p).LengthSquared;
+// 	}
+
+// 	Vector3f NearestPoint(Vector3f p) {
+// 		float t = (p - Center).dot(Direction);
+// 		if (t >= Extent)
+// 			return GetP1();
+// 		if (t <= -Extent)
+// 			return GetP0();
+// 		return Center + t * Direction;
+// 	}
+
+// 	float Project(Vector3f p) {
+// 		return (p - Center).dot(Direction);
+// 	}
+
+// };
 
 class CurveUtils {
 public:
@@ -244,10 +242,12 @@ public:
 			}
 		}
 	}
-};
+	template<typename T> 
+	static T lerp(float t, const T& a, const T& b) {
+		return a*(1-t) + b*t;
+	}
 
-class DCurve3;
-typedef std::shared_ptr<DCurve3> DCurve3Ptr;
+};
 
 /// <summary>
 /// DCurve3 is a 3D polyline, either open or closed (via .Closed()
@@ -278,7 +278,9 @@ public:
 		int i = -1;
 		int N = vertices.size();
 		for (int vi = 0; vi < N; ++vi) {
-			double distSqr = (p - vertices[vi]).squaredNorm();
+			std::list<Vector3d>::iterator it = vertices.begin();
+			std::advance(it, vi);
+			double distSqr = (p - *it).squaredNorm();
 			if (distSqr < nearSqr) {
 				nearSqr = distSqr;
 				i = vi;
@@ -301,17 +303,25 @@ public:
 		resampled.SetClosed(Closed());
 		double prev_t = 1.0 - corner_t;
 		for (int k = 0; k < NV; ++k) {
-			double open_angle = Wm5::Math::FAbs(OpeningAngleDeg(k));
+			double open_angle = std::abs(OpeningAngleDeg(k));
 			if (open_angle > flat_thresh && k > 0) {
 				// ignore skip this vertex
-			} else if (open_angle > sharp_thresh) {
-				resampled.AppendVertex(vertices[k]);
-			} else {
-				Vector3d n = vertices[(k + 1) % NV];
-				Vector3d p = vertices[k == 0 ? NV - 1 : k - 1];
-				resampled.AppendVertex(Vector3d::Lerp(p, vertices[k], prev_t));
-				resampled.AppendVertex(vertices[k]);
-				resampled.AppendVertex(Vector3d::Lerp(vertices[k], n, corner_t));
+			} else if (open_angle > sharp_thresh) {				
+				std::list<Vector3d>::iterator it = vertices.begin();
+				std::advance(it, k);
+				resampled.AppendVertex(*it);
+			} else {				
+				std::list<g3::Vector3d>::iterator it = vertices.begin();
+				std::advance(it, (k + 1) % NV);
+				Vector3d n = *it;
+				it = vertices.begin();
+				std::advance(it, k == 0 ? NV - 1 : k - 1);
+				Vector3d p = *it;						
+				it = vertices.begin();
+				std::advance(it, k);
+				resampled.AppendVertex(CurveUtils::lerp<Vector3d>(prev_t, p, *it));
+				resampled.AppendVertex(*it);
+				resampled.AppendVertex(CurveUtils::lerp<Vector3d>(corner_t, *it, n));
 			}
 		}
 		return resampled;
@@ -328,10 +338,10 @@ public:
 	}
 
 	DCurve3(Wm5::Polygon2d poly, int ix, int iy) {
-		int NV = poly.VertexCount();
+		int NV = poly.GetNumVertices();
 		vertices.resize(NV);
 		for (int k = 0; k < NV; ++k) {
-			Vector3d v = Vector3d::Zero;
+			Vector3d v;
 			v[ix] = poly.GetVertex(k).X();
 			v[iy] = poly.GetVertex(k).Y();
 			vertices.push_back(v);
@@ -380,7 +390,7 @@ public:
 		return closed ? vertices.size() : vertices.size() - 1;
 	}
 
-	Vector3d GetVertex(int i) {
+	Wm5::Vector3d GetVertex(int i) override {
 		int32_t count = 0;
 		for (Vector3d vert : vertices) {
 			if (count == i) {
@@ -388,7 +398,7 @@ public:
 			}
 			count++;
 		}
-		return Vector3d();
+		return Wm5::Vector3d();
 	}
 
 	void SetVertex(int i, Vector3d v) {
@@ -484,7 +494,7 @@ public:
 		return box;
 	}
 	Vector3d Tangent(int i) {
-		std::vector<Vector3d> out_vertices;
+		std::vector<Wm5::Vector3d> out_vertices;
 		for (Vector3d vert : vertices) {
 			out_vertices.push_back(vert);
 		}
@@ -598,15 +608,15 @@ public:
 			it = vertices.begin();
 			std::advance(it, b);
 			Vector3d b_vert = *it;
-			Wm5::Segment3d seg = Wm5::Segment3d(a_vert, b_vert);
+			Segment3d seg = Segment3d(a_vert, b_vert);
 			double t = (p - seg.Center).dot(seg.Direction);
 			double d = std::numeric_limits<double>::max();
 			if (t >= seg.Extent) {
-				d = (p - seg.P1).squaredNorm();
+				d = (p - seg.GetP1()).squaredNorm();
 			} else if (t <= -seg.Extent) {
-				d = (p - seg.P0).squaredNorm();
+				d = (p - seg.GetP0()).squaredNorm();
 			} else {
-				d = ((seg.Center + (t * seg.Direction)) - p).SquaredLength();
+				d = ((seg.Center + (t * seg.Direction)) - p).squaredNorm();
 			}
 			if (d < dist) {
 				dist = d;

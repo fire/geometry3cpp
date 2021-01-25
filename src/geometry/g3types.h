@@ -130,6 +130,9 @@ typedef std::shared_ptr<GeometryAssembly> GeometryAssemblyPtr;
 class DMesh3;
 typedef std::shared_ptr<DMesh3> DMesh3Ptr;
 
+class DCurve3;
+typedef std::shared_ptr<DCurve3> DCurve3Ptr;
+
 class IProjectionTarget;
 typedef std::shared_ptr<IProjectionTarget> IProjectionTargetPtr;
 

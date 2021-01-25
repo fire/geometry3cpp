@@ -14,6 +14,7 @@ typedef std::shared_ptr<MeshBoundaryLoops> MeshBoundaryLoopsPtr;
 /// Extract boundary EdgeLoops from Mesh. Can also extract EdgeSpans for open areas,
 /// however default behavior is to ignore these. Set .SpanBehavior to configure.
 class MeshBoundaryLoops : public EdgeLoop {
+public:
 	DMesh3Ptr Mesh;
 	std::list<EdgeLoopPtr> Loops;
 
@@ -22,7 +23,6 @@ class MeshBoundaryLoops : public EdgeLoop {
 	//	bool FellBackToSpansOnFailure = false;       // set to true if we had to add spans to recover from failure
 	//	// currently this happens if we cannot extract simple loops from a loop with bowties
 
-public:
 	//	// What should we do if we encounter open spans. Mainly a result of EdgeFilter, but can also
 	//	// happen on meshes w/ crazy bowties
 	//	enum SpanBehaviors
