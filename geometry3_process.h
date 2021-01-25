@@ -342,7 +342,6 @@ Array geometry3_process(Array p_mesh) {
   st->create_from_triangle_arrays(mesh);
   st->deindex();
   st->index();
-  st->generate_normals(); // TODO Project Smooth normals 2021-01-21 Fire
   return st->commit_to_arrays();
 }
 } // namespace g3

@@ -683,7 +683,7 @@ protected:
 	/// Does not modify mesh->
 	/// </summary>
 	virtual Vector3d ComputeSmoothedVertexPos(
-			int vID, std::function<Vector3d(const DMesh3 &, int, double)> smoothFunc,
+			int vID, std::function<Vector3d(DMesh3Ptr, int, double)> smoothFunc,
 			bool &bModified) {
 		bModified = false;
 		VertexConstraint vConstraint = VertexConstraint::Unconstrained();
@@ -694,7 +694,7 @@ protected:
 		if (((int)vControl & (int)VertexControl::NoSmooth) != 0)
 			return mesh->GetVertex(vID);
 
-		Vector3d vSmoothed = smoothFunc(*mesh, vID, SmoothSpeedT);
+		Vector3d vSmoothed = smoothFunc(mesh, vID, SmoothSpeedT);
 		gDevAssert(IsFinite(vSmoothed)); // this will really catch a lot of bugs...
 
 		// project onto either vtx constraint target, or surface target
