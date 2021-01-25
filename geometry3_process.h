@@ -337,11 +337,6 @@ Array geometry3_process(Array p_mesh) {
   //   mesh[Mesh::ARRAY_BONES] = bones_array;
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
   // }
-  Ref<SurfaceTool> st;
-  st.instance();
-  st->create_from_triangle_arrays(mesh);
-  st->deindex();
-  st->index();
-  return st->commit_to_arrays();
+  return mesh;
 }
 } // namespace g3
