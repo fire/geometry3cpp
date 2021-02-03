@@ -143,19 +143,19 @@ static void ConstrainVtxLoopTo(Remesher r, std::vector<int> loopV,
 }
 
 // https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-void PreserveBoundaryLoops(g3::MeshConstraintsPtr cons, g3::DMesh3Ptr mesh) {
-  std::list<g3::EdgeLoopPtr> loops = MeshBoundaryLoops(mesh).Loops;
-  for (EdgeLoopPtr loop : loops) {
-    DCurve3Ptr loopC = ExtractLoopV(mesh, loop->Vertices);
-    IProjectionTargetPtr target =
-        std::make_shared<DCurveProjectionTarget>(loopC);
-    std::list<int> loop_verts;
-    for (int index : loop->Vertices) {
-      loop_verts.push_back(index);
-    }
-    ConstrainVtxLoopToMesh(cons, mesh, loop_verts, target);
-  }
-}
+// void PreserveBoundaryLoops(g3::MeshConstraintsPtr cons, g3::DMesh3Ptr mesh) {
+//   std::list<g3::EdgeLoopPtr> loops = MeshBoundaryLoops(mesh).Loops;
+//   for (EdgeLoopPtr loop : loops) {
+//     DCurve3Ptr loopC = ExtractLoopV(mesh, loop->Vertices);
+//     IProjectionTargetPtr target =
+//         std::make_shared<DCurveProjectionTarget>(loopC);
+//     std::list<int> loop_verts;
+//     for (int index : loop->Vertices) {
+//       loop_verts.push_back(index);
+//     }
+//     ConstrainVtxLoopToMesh(cons, mesh, loop_verts, target);
+//   }
+// }
 
 static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
                             double &maxEdgeLen, double &avgEdgeLen,
@@ -292,7 +292,7 @@ Array geometry3_process(Array p_mesh) {
   r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
-  PreserveBoundaryLoops(cons, g3_mesh);
+  // PreserveBoundaryLoops(cons, g3_mesh);
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 4;
   r.SmoothType = Remesher::SmoothTypes::Cotan;

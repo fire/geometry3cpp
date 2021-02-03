@@ -60,7 +60,7 @@ public:
 	/// <summary>
 	/// construct EdgeSpan from a list of vertices of mesh
 	/// </summary>
-	static EdgeSpan FromVertices(DMesh3 mesh, IList<int> vertices) {
+	static EdgeSpan FromVertices(DMesh3 mesh, std::list<int> vertices) {
 		int NV = vertices.Count;
 		int[] Vertices = new int[NV];
 		for (int i = 0; i < NV; ++i)
@@ -145,7 +145,7 @@ public:
 
 	// count # of vertices in loop that are within tol of v
 	// final param returns last encountered index within tolerance, or -1 if return is 0
-	int CountWithinTolerance(Vector3d v, double tol, out int last_in_tol) {
+	int CountWithinTolerance(Vector3d v, double tol, int &last_in_tol) {
 		last_in_tol = -1;
 		int count = 0;
 		int N = Vertices.size();
