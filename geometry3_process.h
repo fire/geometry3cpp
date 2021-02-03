@@ -390,7 +390,7 @@ Array geometry3_process(Array p_mesh) {
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
   // }
   print_line(vformat("remesh took %.2f",
-             rtos((OS::get_singleton()->get_ticks_msec() - ticks) * 1000.0f)));
+             (OS::get_singleton()->get_ticks_msec() - ticks) * 1000.0f));
   return mesh;
 }
 } // namespace g3
