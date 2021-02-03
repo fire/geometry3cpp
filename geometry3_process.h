@@ -304,7 +304,7 @@ Array geometry3_process(Array p_mesh) {
   double max_edge_len = 0.0;
   EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
   print_line(String("avg edge len ") + rtos(avg_edge_len));
-  double target_edge_len = avg_edge_len;
+  double target_edge_len = avg_edge_len * 0.50;
   print_line(String("target edge len ") + rtos(target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
   r.Precompute();
