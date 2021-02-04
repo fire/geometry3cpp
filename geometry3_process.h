@@ -288,24 +288,22 @@ Array geometry3_process(Array p_mesh) {
   std::cout << g3_mesh->MeshInfoString();
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
-  // PreserveAllBoundaryEdges(cons, g3_mesh);
-  r.SmoothType = Remesher::SmoothTypes::Cotan;
+  PreserveAllBoundaryEdges(cons, g3_mesh);
+  // r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // PreserveBoundaryLoops(cons, g3_mesh);
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 4;
-  r.SmoothType = Remesher::SmoothTypes::Cotan;
-  r.EnableParallelSmooth =
-      true; // TODO Implement parallel smooth 2021-01-24 FIRE
+  r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-01-24 FIRE
   r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   double min_edge_len = 0.0;
   double max_edge_len = 0.0;
   EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
-  print_line(String("avg edge len ") + rtos(avg_edge_len));
-  double target_edge_len = avg_edge_len * 0.50;
-  print_line(String("target edge len ") + rtos(target_edge_len));
+  print_line(vformat("avg edge len %.2f", avg_edge_len));
+  double target_edge_len = avg_edge_len;
+  print_line(vformat("target edge len %.2f", target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
   r.Precompute();
   for (int k = 0; k < iterations; ++k) {
@@ -368,8 +366,8 @@ Array geometry3_process(Array p_mesh) {
     }
   }
   index_array.resize(vertex_array.size());
-  for (int32_t i = 0; i < vertex_array.size(); i++) {
-    index_array.write[i] = i;
+  for (int32_t index_i = 0; index_i < vertex_array.size(); index_i++) {
+    index_array.write[index_i] = index_i;
   }
 
   Array mesh;
@@ -390,7 +388,7 @@ Array geometry3_process(Array p_mesh) {
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
   // }
   print_line(vformat("remesh took %.2f",
-             (OS::get_singleton()->get_ticks_msec() - ticks) * 1000.0f));
+             (OS::get_singleton()->get_ticks_msec() - ticks) / 1000.0f));
   return mesh;
 }
 } // namespace g3
