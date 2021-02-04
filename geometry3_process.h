@@ -285,7 +285,6 @@ Array geometry3_process(Array p_mesh) {
                 index_array[index_i * 3 + 2]);
     g3_mesh->AppendTriangle(new_tri);
   }
-  std::cout << g3_mesh->MeshInfoString();
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
   PreserveAllBoundaryEdges(cons, g3_mesh);
@@ -305,6 +304,7 @@ Array geometry3_process(Array p_mesh) {
   double target_edge_len = avg_edge_len * 0.5;
   print_line(vformat("target edge len %.2f", target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
+  r.SmoothSpeedT = 1.0f;
   r.Precompute();
   for (int k = 0; k < iterations; ++k) {
     r.BasicRemeshPass();
@@ -312,7 +312,7 @@ Array geometry3_process(Array p_mesh) {
   }
   print_line("remesh done");
   RemoveFinTriangles(g3_mesh, true);
-
+  std::cout << g3_mesh->MeshInfoString();
   vertex_array.clear();
   index_array.clear();
   uv1_array.clear();
