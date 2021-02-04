@@ -1763,7 +1763,10 @@ public:
 				n++;
 			}
 			if (n > 0) {
-				centroid *= 1.0 / n;
+				double d = 1.0 / n;
+				centroid.x() = centroid.x() * d; 
+				centroid.y() = centroid.y() * d; 
+				centroid.z() = centroid.z() * d; 
 			}
 		}
 	}

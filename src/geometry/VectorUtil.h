@@ -1,5 +1,6 @@
 #pragma once
 
+#include <corecrt_math.h>
 #include <g3types.h>
 #include <math.h>
 
@@ -371,7 +372,15 @@ Real VectorAngleD(const Vector3<Real> &v1, const Vector3<Real> &v2) {
 template <class Real>
 Real VectorCot(const Vector3<Real> &v1, const Vector3<Real> &v2) {
 	Real fDot = v1.dot(v2);
-	return fDot / (Real)sqrt(v1.dot(v1) * v2.dot(v2) - fDot * fDot);
+
+	Real lensqr1 = v1.squaredNorm();
+	Real lensqr2 = v2.squaredNorm();
+	Real d = Clamp(lensqr1 * lensqr2 - fDot * fDot, (Real)0.0, (Real)std::numeric_limits<Real>::max());
+	if (d < std::numeric_limits<Real>::epsilon()) {
+		return 0;
+	} else {
+		return fDot / sqrt(d);
+	}
 }
 
 template <class Real>

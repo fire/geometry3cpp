@@ -289,7 +289,7 @@ Array geometry3_process(Array p_mesh) {
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
   PreserveAllBoundaryEdges(cons, g3_mesh);
-  // r.SmoothType = Remesher::SmoothTypes::Cotan;
+  r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // PreserveBoundaryLoops(cons, g3_mesh);
