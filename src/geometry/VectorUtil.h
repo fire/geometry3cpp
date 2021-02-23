@@ -53,6 +53,9 @@ template <class Real>
 Real VectorAngleD(const Vector3<Real> &v1, const Vector3<Real> &v2);
 
 template <class Real>
+Real VectorCot(const Vector3<Real> &v1, const Vector3<Real> &v2);
+
+template <class Real>
 Vector2<Real> Lerp(const Vector2<Real> &v1, const Vector2<Real> &v2, Real t);
 template <class Real>
 Vector3<Real> Lerp(const Vector3<Real> &v1, const Vector3<Real> &v2, Real t);
@@ -367,6 +370,20 @@ Real VectorAngleD(const Vector3<Real> &v1, const Vector3<Real> &v2) {
 }
 
 template <class Real>
+Real VectorCot(const Vector3<Real> &v1, const Vector3<Real> &v2) {
+	Real fDot = v1.dot(v2);
+
+	Real lensqr1 = v1.squaredNorm();
+	Real lensqr2 = v2.squaredNorm();
+	Real d = Clamp(lensqr1 * lensqr2 - fDot * fDot, (Real)0.0, (Real)std::numeric_limits<Real>::max());
+	if (d < std::numeric_limits<Real>::epsilon()) {
+		return 0;
+	} else {
+		return fDot / sqrt(d);
+	}
+}
+
+template <class Real>
 Vector2<Real> Lerp(const Vector2<Real> &v1, const Vector2<Real> &v2,
 		Real t) {
 	return (1 - t) * v1 + (t)*v2;
@@ -661,6 +678,11 @@ template double VectorAngleD(const Vector2<double> &v1,
 template float VectorAngleD(const Vector3<float> &v1,
 		const Vector3<float> &v2);
 template double VectorAngleD(const Vector3<double> &v1,
+		const Vector3<double> &v2);
+
+template float VectorCot(const Vector3<float> &v1,
+		const Vector3<float> &v2);
+template double VectorCot(const Vector3<double> &v1,
 		const Vector3<double> &v2);
 
 template Vector2<float> Lerp(const Vector2<float> &v1,

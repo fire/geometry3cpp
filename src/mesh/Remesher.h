@@ -19,6 +19,59 @@ class Remesher : public MeshRefinerBase {
 		sqr = std::clamp(sqr, 0.0, std::numeric_limits<double>::max());
 		return sqrt(sqr);
 	}
+	// Compute cotan-weighted neighbour sum around a vertex.
+	// These weights are numerically unstable if any of the triangles are degenerate.
+	// We catch these problems and return input vertex as centroid
+	// http://www.geometry.caltech.edu/pubs/DMSB_III.pdf
+	static Vector3d CotanCentroid(DMesh3Ptr mesh, int v_i) {
+		Vector3d vSum;
+		double wSum = 0;
+		Vector3d Vi = mesh->GetVertex(v_i);
+
+		int v_j = DMesh3::InvalidID, opp_v1 = DMesh3::InvalidID, opp_v2 = DMesh3::InvalidID;
+		int t1 = DMesh3::InvalidID, t2 = DMesh3::InvalidID;
+		bool bAborted = false;
+		for (int eid : mesh->VtxEdgesItr(v_i)) {
+			opp_v2 = DMesh3::InvalidID;
+			mesh->GetVtxNbrhood(eid, v_i, v_j, opp_v1, opp_v2, t1, t2);
+			Vector3d Vj = mesh->GetVertex(v_j);
+
+			Vector3d Vo1 = mesh->GetVertex(opp_v1);
+			double cot_alpha_ij = VectorCot(
+					(Vi - Vo1).normalized(), (Vj - Vo1).normalized());
+			if (cot_alpha_ij == 0) {
+				bAborted = true;
+				break;
+			}
+			double w_ij = cot_alpha_ij;
+
+			if (opp_v2 != DMesh3::InvalidID) {
+				Vector3d Vo2 = mesh->GetVertex(opp_v2);
+				double cot_beta_ij = VectorCot(
+						(Vi - Vo2).normalized(), (Vj - Vo2).normalized());
+				if (cot_beta_ij == 0) {
+					bAborted = true;
+					break;
+				}
+				w_ij += cot_beta_ij;
+			}
+
+			vSum += w_ij * Vj;
+			wSum += w_ij;
+		}
+		if (bAborted || std::abs(wSum) < std::numeric_limits<double>::epsilon()) {
+			return Vi;
+		}
+		return vSum / wSum;
+	}
+
+public:
+	// t in range [0,1]
+	static Vector3d CotanSmooth(DMesh3Ptr mesh, int vID, double t) {
+		Vector3d v = mesh->GetVertex(vID);
+		Vector3d c = CotanCentroid(mesh, vID);
+		return (1 - t) * v + (t)*c;
+	}
 
 protected:
 	IProjectionTargetPtr target = nullptr;
@@ -37,6 +90,7 @@ public:
 	double SmoothSpeedT = 0.1f;
 
 	enum class SmoothTypes { Uniform,
+		Cotan,
 		MeanValue };
 	SmoothTypes SmoothType = SmoothTypes::Uniform;
 
@@ -562,6 +616,10 @@ protected:
 				UniformSmooth;
 		if (CustomSmoothF != nullptr) {
 			smoothFunc = CustomSmoothF;
+		} else {
+			if (SmoothType == Remesher::SmoothTypes::Cotan) {
+				smoothFunc = Remesher::CotanSmooth;
+			}
 		}
 
 		auto smooth = [&](int vID) {
