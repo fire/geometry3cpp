@@ -288,7 +288,7 @@ Array geometry3_process(Array p_mesh) {
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
   PreserveAllBoundaryEdges(cons, g3_mesh);
-  r.SmoothType = Remesher::SmoothTypes::Cotan;
+  // r.SmoothType = Remesher::SmoothTypes::Cotan;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // PreserveBoundaryLoops(cons, g3_mesh);
@@ -304,7 +304,7 @@ Array geometry3_process(Array p_mesh) {
   double target_edge_len = avg_edge_len * 0.5;
   print_line(vformat("target edge len %.2f", target_edge_len));
   r.SetTargetEdgeLength(target_edge_len);
-  r.SmoothSpeedT = 1.0f;
+  r.SmoothSpeedT = 0.5f;
   r.Precompute();
   for (int k = 0; k < iterations; ++k) {
     r.BasicRemeshPass();
