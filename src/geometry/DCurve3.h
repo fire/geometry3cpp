@@ -42,10 +42,10 @@ struct Segment3d {
 		return Center + Extent * Direction;
 	}
 
-	Vector3d SetP0(Vector3d value) {
+	void SetP0(Vector3d value) {
 		update_from_endpoints(value, GetP1());
 	}
-	Vector3d SetP1(Vector3d value) {
+	void SetP1(Vector3d value) {
 		update_from_endpoints(GetP0(), value);
 	}
 	double Length() {

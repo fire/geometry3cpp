@@ -1,6 +1,5 @@
 #pragma once
 
-#include <corecrt_math.h>
 #include <g3types.h>
 #include <math.h>
 
