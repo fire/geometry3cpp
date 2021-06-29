@@ -573,11 +573,6 @@ protected:
 		return vNewPos;
 	}
 
-	virtual void
-	apply_to_smooth_vertices(const std::function<void(int)> &apply_f) {
-		for (int vid : mesh->VertexIndices())
-			apply_f(vid);
-	}
 	DMesh3::vertex_iterator smooth_vertices()
 	{
 		return mesh->VertexIndices();
@@ -631,14 +626,9 @@ protected:
 			}
 		};
 		// TODO 2021-01-24 Add back parallel
-		if (false && bParallel) {
-		//    gParallel.ForEach<int>(smooth_vertices(), smooth);
-		} else {
-		   for(int vID : smooth_vertices()) {
-		       smooth(vID);
-		   }
+		for(int vID : smooth_vertices()) {
+			smooth(vID);
 		}
-		apply_to_smooth_vertices(smooth);
 
 		ApplyVertexBuffer(bParallel);
 	}
