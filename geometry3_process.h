@@ -385,7 +385,7 @@ Array geometry3_process(Array p_mesh) {
   //   mesh[Mesh::ARRAY_BONES] = bones_array;
   //   mesh[Mesh::ARRAY_WEIGHTS] = weights_array;
   // }
-  print_line(vformat("remesh took %.2f",
+  print_line(vformat("remesh took %.2fs",
              (OS::get_singleton()->get_ticks_msec() - ticks) / 1000.0f));
   return mesh;
 }
