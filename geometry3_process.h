@@ -300,10 +300,8 @@ Array geometry3_process(Array p_mesh) {
   double min_edge_len = 0.0;
   double max_edge_len = 0.0;
   EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
-  print_line(vformat("avg edge len %.2f", avg_edge_len));
-  double target_edge_len = avg_edge_len * 0.5;
-  print_line(vformat("target edge len %.2f", target_edge_len));
-  r.SetTargetEdgeLength(target_edge_len);
+  print_line(vformat("target edge len %.2f", avg_edge_len));
+  r.SetTargetEdgeLength(avg_edge_len);
   r.SmoothSpeedT = 0.5f;
   r.Precompute();
   for (int k = 0; k < iterations; ++k) {
