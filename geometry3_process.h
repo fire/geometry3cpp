@@ -1,5 +1,5 @@
 #pragma once
-#include "core/object/reference.h"
+#include "core/object/ref_counted.h"
 #include "scene/resources/mesh.h"
 
 #include "scene/resources/mesh.h"
