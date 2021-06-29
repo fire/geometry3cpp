@@ -288,13 +288,13 @@ Array geometry3_process(Array p_mesh) {
   Remesher r(g3_mesh);
   g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
   PreserveAllBoundaryEdges(cons, g3_mesh);
-  r.SmoothType = Remesher::SmoothTypes::Cotan;
+  r.SmoothType = Remesher::SmoothTypes::Uniform;
   r.SetExternalConstraints(cons);
   r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
   // PreserveBoundaryLoops(cons, g3_mesh);
   // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
   int iterations = 2;
-  r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-01-24 FIRE
+  r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-06-29 FIRE
   r.PreventNormalFlips = true;
   double avg_edge_len = 0.0;
   double min_edge_len = 0.0;
@@ -302,7 +302,7 @@ Array geometry3_process(Array p_mesh) {
   EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
   print_line(vformat("target edge len %.2f", avg_edge_len));
   r.SetTargetEdgeLength(avg_edge_len);
-  r.SmoothSpeedT = 0.5f;
+  r.SmoothSpeedT = 1.0f / iterations;
   r.Precompute();
   for (int k = 0; k < iterations; ++k) {
     r.BasicRemeshPass();

@@ -19,6 +19,7 @@ class Remesher : public MeshRefinerBase {
 		sqr = std::clamp(sqr, 0.0, std::numeric_limits<double>::max());
 		return sqrt(sqr);
 	}
+
 	// Compute cotan-weighted neighbour sum around a vertex.
 	// These weights are numerically unstable if any of the triangles are degenerate.
 	// We catch these problems and return input vertex as centroid
@@ -27,7 +28,6 @@ class Remesher : public MeshRefinerBase {
 		Vector3d vSum;
 		double wSum = 0;
 		Vector3d Vi = mesh->GetVertex(v_i);
-
 		int v_j = DMesh3::InvalidID, opp_v1 = DMesh3::InvalidID, opp_v2 = DMesh3::InvalidID;
 		int t1 = DMesh3::InvalidID, t2 = DMesh3::InvalidID;
 		bool bAborted = false;
@@ -35,7 +35,6 @@ class Remesher : public MeshRefinerBase {
 			opp_v2 = DMesh3::InvalidID;
 			mesh->GetVtxNbrhood(eid, v_i, v_j, opp_v1, opp_v2, t1, t2);
 			Vector3d Vj = mesh->GetVertex(v_j);
-
 			Vector3d Vo1 = mesh->GetVertex(opp_v1);
 			double cot_alpha_ij = VectorCot(
 					(Vi - Vo1).normalized(), (Vj - Vo1).normalized());
@@ -47,6 +46,7 @@ class Remesher : public MeshRefinerBase {
 
 			if (opp_v2 != DMesh3::InvalidID) {
 				Vector3d Vo2 = mesh->GetVertex(opp_v2);
+				
 				double cot_beta_ij = VectorCot(
 						(Vi - Vo2).normalized(), (Vj - Vo2).normalized());
 				if (cot_beta_ij == 0) {
@@ -92,7 +92,7 @@ public:
 	enum class SmoothTypes { Uniform,
 		Cotan,
 		MeanValue };
-	SmoothTypes SmoothType = SmoothTypes::Uniform;
+	SmoothTypes SmoothType = SmoothTypes::Cotan;
 
 	// this overrides default smoothing if provided
 	std::function<Vector3d(DMesh3Ptr, int, double)> CustomSmoothF;
@@ -578,32 +578,6 @@ protected:
 		return mesh->VertexIndices();
 	}
 
-	// protected virtual void FullSmoothPass_InPlace(bool bParallel) {
-	//       Func<DMesh3, int, double, Vector3d> smoothFunc =
-	//       MeshUtil.UniformSmooth; if (CustomSmoothF != null) {
-	//           smoothFunc = CustomSmoothF;
-	//       } else {
-	//           if (SmoothType == SmoothTypes.MeanValue)
-	//               smoothFunc = MeshUtil.MeanValueSmooth;
-	//           else if (SmoothType == SmoothTypes.Cotan)
-	//               smoothFunc = MeshUtil.CotanSmooth;
-	//       }
-
-	//       Action<int> smooth = (vID) => {
-	//           bool bModified = false;
-	//           Vector3d vSmoothed = ComputeSmoothedVertexPos(vID, smoothFunc,
-	//           out bModified); if ( bModified )
-	//               mesh->SetVertex(vID, vSmoothed);
-	//       };
-
-	//       if (bParallel) {
-	//           gParallel.ForEach<int>(smooth_vertices(), smooth);
-	//       } else {
-	//           foreach ( int vID in smooth_vertices() )
-	//               smooth(vID);
-	//       }
-	//}
-
 	virtual void FullSmoothPass_Buffer(bool bParallel) {
 		InitializeVertexBufferForPass();
 
@@ -611,23 +585,18 @@ protected:
 				UniformSmooth;
 		if (CustomSmoothF != nullptr) {
 			smoothFunc = CustomSmoothF;
-		} else {
-			if (SmoothType == Remesher::SmoothTypes::Cotan) {
+		} else if (SmoothType == Remesher::SmoothTypes::Cotan) {
 				smoothFunc = Remesher::CotanSmooth;
-			}
 		}
 
-		auto smooth = [&](int vID) {
+		// TODO 2021-06-29 Add back parallel
+		for(int vID : smooth_vertices()) {
 			bool bModified = false;
 			Vector3d vSmoothed = ComputeSmoothedVertexPos(vID, smoothFunc, bModified);
 			if (bModified) {
 				vModifiedV[vID] = true;
 				vBufferV[vID] = vSmoothed;
 			}
-		};
-		// TODO 2021-01-24 Add back parallel
-		for(int vID : smooth_vertices()) {
-			smooth(vID);
 		}
 
 		ApplyVertexBuffer(bParallel);
