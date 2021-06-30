@@ -437,7 +437,6 @@ public:
 	Vector3d End() {
 		if (Closed()) {
 			std::list<Vector3d>::iterator it = vertices.begin();
-			std::advance(it, 0);
 			return *it;
 		}
 		std::list<Vector3d>::iterator it = vertices.end();
