@@ -6,26 +6,27 @@
 #include <string>
 
 namespace g3 {
+
 // find the vtx that is the same in both ev0 and ev1
-static int find_shared_edge_v(const Index2i &ev0, const Index2i ev1) {
-	if (ev0.x() == ev1.x()) {
-		return ev0.x();
-	} else if (ev0.x() == ev1.y()) {
-		return ev0.x();
-	} else if (ev0.y() == ev1.x()) {
-		return ev0.y();
-	} else if (ev0.y() == ev1.y()) {
-		return ev0.y();
+static int find_shared_edge_v(const Vector2i &ev0, const Vector2i ev1) {
+	if (ev0.x == ev1.x) {
+		return ev0.x;
+	} else if (ev0.x == ev1.y) {
+		return ev0.x;
+	} else if (ev0.y == ev1.x) {
+		return ev0.y;
+	} else if (ev0.y == ev1.y) {
+		return ev0.y;
 	} else {
 		return DMesh3::InvalidID;
 	}
 }
 
-static int find_edge_other_v(Index2i ev, int v) {
-	if (ev.x() == v) {
-		return ev.y();
-	} else if (ev.y() == v) {
-		return ev.x();
+static int find_edge_other_v(Vector2i ev, int v) {
+	if (ev.x == v) {
+		return ev.y;
+	} else if (ev.y == v) {
+		return ev.x;
 	} else {
 		return DMesh3::InvalidID;
 	}
@@ -76,10 +77,10 @@ public:
 
 		std::vector<int> Vertices;
 		Vertices.resize(Edges.size());
-		Index2i start_ev = mesh->GetEdgeV(Edges[0]);
-		Index2i prev_ev = start_ev;
+		Vector2i start_ev = mesh->GetEdgeV(Edges[0]);
+		Vector2i prev_ev = start_ev;
 		for (int i = 1; i < Edges.size(); ++i) {
-			Index2i next_ev = mesh->GetEdgeV(Edges[i % Edges.size()]);
+			Vector2i next_ev = mesh->GetEdgeV(Edges[i % Edges.size()]);
 			Vertices[i] = find_shared_edge_v(prev_ev, next_ev);
 			prev_ev = next_ev;
 		}
@@ -123,8 +124,8 @@ public:
 			int a = Vertices[0], b = Vertices[1];
 			int eid = mesh->FindEdge(a, b);
 			if (mesh->IsBoundaryEdge(eid)) {
-				Index2i ev = mesh->GetOrientedBoundaryEdgeV(eid);
-				if (ev.x() == b && ev.y() == a) {
+				Vector2i ev = mesh->GetOrientedBoundaryEdgeV(eid);
+				if (ev.x == b && ev.y == a) {
 					std::reverse(Vertices.begin(), Vertices.end());
 				}
 			}
@@ -154,8 +155,8 @@ public:
 		return Mesh->GetVertex(Vertices[i]);
 	}
 
-	AxisAlignedBox3d GetBounds() {
-		AxisAlignedBox3d box;
+	AABB GetBounds() {
+		AABB box;
 		for (int i = 0; i < Vertices.size(); ++i) {
 			box.Contain(Mesh->GetVertex(Vertices[i]));
 		}
@@ -166,7 +167,7 @@ public:
 	//{
 	//	if (sourceMesh == null)
 	//		sourceMesh = Mesh;
-	//	DCurve3 curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
+	//	DCurve3 curve = ExtractLoopV(sourceMesh, Vertices);
 	//	curve.Closed = true;
 	//	return curve;
 	//}
@@ -181,7 +182,7 @@ public:
 	//		int a = Vertices[0], b = Vertices[1];
 	//		int eid = Mesh.FindEdge(a, b);
 	//		if (Mesh.IsBoundaryEdge(eid)) {
-	//			Index2i ev = Mesh.GetOrientedBoundaryEdgeV(eid);
+	//			Vector2i ev = Mesh.GetOrientedBoundaryEdgeV(eid);
 	//			if (ev.a == b && ev.b == a) {
 	//				Reverse();
 	//				return true;

@@ -63,9 +63,9 @@ class PackedMeshVertexSource : public Wml::VertexSource<double> {
 public:
 	const float *pVertices;
 	virtual ~PackedMeshVertexSource() = default;
-	virtual Wml::Vector3<double> operator[](unsigned int i) const {
+	virtual Vector3<double> operator[](unsigned int i) const {
 		i = 3 * i;
-		return Wml::Vector3<double>(pVertices[i], pVertices[i + 1],
+		return Vector3<double>(pVertices[i], pVertices[i + 1],
 				pVertices[i + 2]);
 	}
 };
@@ -75,7 +75,7 @@ double Volume(const IPackedMesh *pMesh) {
 	tmp.pVertices = pMesh->GetPositionsBuffer();
 
 	double fMass;
-	Wml::Vector3d vCoM;
+	Vector3d vCoM;
 	Wml::Matrix3d vMoI;
 	Wml::ComputeMassProperties(&tmp, (int)pMesh->GetTriangleCount(),
 			(const int *)pMesh->GetIndicesBuffer(), false,
@@ -85,21 +85,21 @@ double Volume(const IPackedMesh *pMesh) {
 
 Box3f AxisBoundingBox(const IPackedMesh *pMesh) {
 	int NV = pMesh->GetVertexCount();
-	std::vector<Wml::Vector3f> pts;
+	std::vector<Vector3f> pts;
 	pts.reserve(NV);
 	const float *p = pMesh->GetPositionsBuffer();
 	for (int k = 0; k < NV; ++k)
-		pts.push_back(Wml::Vector3f(p[3 * k], p[3 * k + 1], p[3 * k + 2]));
+		pts.push_back(Vector3f(p[3 * k], p[3 * k + 1], p[3 * k + 2]));
 	return Wml::ContAlignedBox(NV, &pts[0]);
 }
 
 Box3f OrientedBoundingBox(const IPackedMesh *pMesh, bool bFast) {
 	int NV = pMesh->GetVertexCount();
-	std::vector<Wml::Vector3f> pts;
+	std::vector<Vector3f> pts;
 	pts.reserve(NV);
 	const float *p = pMesh->GetPositionsBuffer();
 	for (int k = 0; k < NV; ++k)
-		pts.push_back(Wml::Vector3f(p[3 * k], p[3 * k + 1], p[3 * k + 2]));
+		pts.push_back(Vector3f(p[3 * k], p[3 * k + 1], p[3 * k + 2]));
 	return Wml::ContOrientedBox(NV, &pts[0]);
 }
 
@@ -132,4 +132,14 @@ void Scale(IPackedMesh *pMesh, const Vector3f &vScale) {
 
 	pMesh->updateTimeStamp();
 }
+
+static g3::DCurve3Ptr ExtractLoopV(g3::DMesh3Ptr mesh, std::vector<int> vertices) {
+	g3::DCurve3Ptr curve = std::make_shared<g3::DCurve3>();
+	for (int vid : vertices) {
+		curve->AppendVertex(mesh->GetVertex(vid));
+	}
+	curve->SetClosed(true);
+	return curve;
+}
+};
 } // namespace g3

@@ -7,13 +7,13 @@ namespace g3 {
 
 class SphereGenerator {
 public:
-	Frame3d vFrame;
+	Frame3Dd vFrame;
 	double fRadius;
 	int nSlices;
 	int nStacks;
 
 	SphereGenerator() {
-		vFrame = Frame3d();
+		vFrame = Frame3Dd();
 		fRadius = 1.0;
 		nSlices = 8;
 		nStacks = 8;

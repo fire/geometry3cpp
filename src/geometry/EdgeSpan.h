@@ -2,9 +2,13 @@
 
 #include "g3types.h"
 #include "EdgeLoop.h"
+#include "DCurve3.h"
 
+#include <cfloat>
 #include <vector>
 #include <list>
+
+#include "core/config/engine.h"
 
 namespace g3 {
 /// <summary>
@@ -40,11 +44,11 @@ public:
         }
 		std::vector<int> Vertices;
         Vertices.resize(Edges.size() + 1);
-		Index2i start_ev = mesh->GetEdgeV(Edges[0]);
-		Index2i prev_ev = start_ev;
+		Vector2i start_ev = mesh->GetEdgeV(Edges[0]);
+		Vector2i prev_ev = start_ev;
 		if (Edges.size() > 1) {
 			for (int i = 1; i < Edges.size(); ++i) {
-				Index2i next_ev = mesh->GetEdgeV(Edges[i]);
+				Vector2i next_ev = mesh->GetEdgeV(Edges[i]);
 				Vertices[i] = find_shared_edge_v(prev_ev, next_ev);
 				prev_ev = next_ev;
 			}
@@ -60,19 +64,23 @@ public:
 	/// <summary>
 	/// construct EdgeSpan from a list of vertices of mesh
 	/// </summary>
-	static EdgeSpan FromVertices(DMesh3 mesh, std::list<int> vertices) {
-		int NV = vertices.Count;
-		int[] Vertices = new int[NV];
-		for (int i = 0; i < NV; ++i)
-			Vertices[i] = vertices[i];
-		int NE = NV - 1;
-		int[] Edges = new int[NE];
-		for (int i = 0; i < NE; ++i) {
-			Edges[i] = mesh.FindEdge(Vertices[i], Vertices[i + 1]);
-			if (Edges[i] == DMesh3.InvalidID)
-				throw new Exception("EdgeSpan.FromVertices: vertices are not connected by edge!");
+	static EdgeSpan FromVertices(DMesh3Ptr mesh, std::list<int> vertices) {
+		int NV = vertices.size();
+		std::vector<int> Vertices;
+		Vertices.resize(NV);
+        std::list<int>::iterator it = vertices.begin();
+		for (int i = 0; i < NV; ++i) {
+            std::advance(it, 1);
+			Vertices[i] = *it;
 		}
-		return new EdgeSpan(mesh, Vertices, Edges, false);
+		int NE = NV - 1;
+		std::vector<int> Edges;
+		Edges.resize(NE);
+		for (int i = 0; i < NE; ++i) {
+			Edges[i] = mesh->FindEdge(Vertices[i], Vertices[i+1]);
+			ERR_CONTINUE_MSG(Edges[i] == DMesh3::InvalidID, "EdgeSpan.FromVertices: vertices are not connected by edge!");
+		}
+		return EdgeSpan(mesh, Vertices, Edges);
 	}
 
 	int VertexCount() {
@@ -86,25 +94,26 @@ public:
 		return Mesh->GetVertex(Vertices[i]);
 	}
 
-	AxisAlignedBox3d GetBounds() {
-		AxisAlignedBox3d box;
+	AABB GetBounds() {
+		AABB box;
 		for (int i = 0; i < Vertices.size(); ++i)
 			box.Contain(Mesh->GetVertex(Vertices[i]));
 		return box;
 	}
 
-	DCurve3Ptr ToCurve(DMesh3Ptr sourceMesh = null) {
-		if (sourceMesh == null)
+	DCurve3Ptr ToCurve(DMesh3Ptr sourceMesh = nullptr) {
+		if (sourceMesh == nullptr) {
 			sourceMesh = Mesh;
-		DCurve3Ptr curve = MeshUtil.ExtractLoopV(sourceMesh, Vertices);
+		}
+		DCurve3Ptr curve = ExtractLoopV(sourceMesh, Vertices);
 		curve->SetClosed(false);
 		return curve;
 	}
 
 	bool IsInternalSpan() {
-		int NV = Vertices.Length;
+		int NV = Vertices.size();
 		for (int i = 0; i < NV - 1; ++i) {
-			int eid = Mesh.FindEdge(Vertices[i], Vertices[i + 1]);
+			int eid = Mesh->FindEdge(Vertices[i], Vertices[i + 1]);
 			if (eid == DMesh3::InvalidID) {
                 continue;
             }
@@ -116,24 +125,29 @@ public:
 	}
 
 	bool IsBoundarySpan(DMesh3Ptr testMesh = nullptr) {
-		DMesh3 useMesh = (testMesh != null) ? testMesh : Mesh;
+		
+		DMesh3Ptr useMesh = Mesh;
+		if (testMesh) {
+			useMesh = testMesh;
+		}
 
-		int NV = Vertices.Length;
+		int NV = Vertices.size();
 		for (int i = 0; i < NV - 1; ++i) {
-			int eid = useMesh.FindEdge(Vertices[i], Vertices[i + 1]);
-			Debug.Assert(eid != DMesh3.InvalidID);
-			if (useMesh.IsBoundaryEdge(eid) == false)
+			int eid = useMesh->FindEdge(Vertices[i], Vertices[i + 1]);
+			ERR_CONTINUE(eid == DMesh3::InvalidID);
+			if (useMesh->IsBoundaryEdge(eid) == false) {
 				return false;
+			}
 		}
 		return true;
 	}
 
 	int FindNearestVertex(Vector3d v) {
 		int iNear = -1;
-		double fNearSqr = double.MaxValue;
-		int N = Vertices.Length;
+		double fNearSqr = DBL_MAX;
+		int N = Vertices.size();
 		for (int i = 0; i < N; ++i) {
-			Vector3d lv = Mesh.GetVertex(Vertices[i]);
+			Vector3d lv = Mesh->GetVertex(Vertices[i]);
 			double d2 = v.DistanceSquared(lv);
 			if (d2 < fNearSqr) {
 				fNearSqr = d2;
@@ -161,10 +175,10 @@ public:
 
 	// Check if Spanw is the same set of positions on another mesh.
 	// Does not require the indexing to be the same
-	bool IsSameSpan(EdgeSpan Spanw, bool bReverse2 = false, double tolerance = MathUtil.ZeroTolerance) {
+	bool IsSameSpan(EdgeSpan Spanw, bool bReverse2 = false, double tolerance = Wm5::ZERO_TOLERANCE) {
 		// [RMS] this is much easier than for a loop, because it has to have
 		//   same endpoints. But don't have time right now.
-		throw new NotImplementedException("todo!");
+		ERR_FAIL_MSG_V("todo!", false);
 	}
 
 	// /// <summary>
@@ -184,7 +198,7 @@ public:
 
 	//     CheckOrFailF(Vertices.Length == Edges.Length + 1);
 	//     for (int ei = 0; ei < Edges.Length; ++ei) {
-	//         Index2i ev = Mesh.GetEdgeV(Edges[ei]);
+	//         Vector2i ev = Mesh.GetEdgeV(Edges[ei]);
 	//         CheckOrFailF(Mesh.IsVertex(ev.a));
 	//         CheckOrFailF(Mesh.IsVertex(ev.b));
 	//         CheckOrFailF(Mesh.FindEdge(ev.a, ev.b) != DMesh3.InvalidID);
@@ -222,5 +236,5 @@ public:
 		}
 		return edges;
 	}
-}
+};
 } // namespace g3

@@ -331,7 +331,7 @@ protected:
 		bool bIsBoundaryEdge = (t1 == InvalidID);
 
 		// look up 'other' verts c (from t0) and d (from t1, if it exists)
-		Index2i ov = mesh->GetEdgeOpposingV(edgeID);
+		Vector2i ov = mesh->GetEdgeOpposingV(edgeID);
 		int c = ov[0], d = ov[1];
 
 		Vector3d vA = mesh->GetVertex(a);

@@ -41,7 +41,7 @@ template <typename Real, template <typename> class VectorType = dvector>
 class OldDMesh3 : public IDynamicMesh<Real> {
 public:
 	typedef OldDMesh3<Real, VectorType> DMesh3T;
-	static Vector3<Real> InvalidVertex;
+	static Vector3 InvalidVertex;
 	static Vector3i InvalidTriangle;
 	static Vector2i InvalidEdge;
 
@@ -84,7 +84,7 @@ public:
 	// construction
 	//
 
-	virtual VertexID AppendVertex(const Vector3<Real> &v) override;
+	virtual VertexID AppendVertex(const Vector3 &v) override;
 	virtual TriangleID AppendTriangle(const Vector3i &t, GroupID gID = 0) override;
 
 	MeshResult RemoveTriangle(TriangleID tID, bool bDeleteUnrefVertices = true);
@@ -98,13 +98,13 @@ public:
 
 	MeshResult CollapseEdge(VertexID vKeep, VertexID vRemove, EdgeCollapseInfo &collapse);
 
-	virtual const Vector3<Real> &GetVertex(VertexID vID) const;
+	virtual const Vector3 &GetVertex(VertexID vID) const;
 	virtual const Vector3i &GetTriangle(TriangleID tID) const;
 	virtual const Vector2i &GetEdgeV(EdgeID eID) const;
 	virtual Vector2i GetEdgeOpposingV(EdgeID eID) const;
 	virtual const Vector2i &GetEdgeT(EdgeID eID) const;
 
-	virtual void SetVertex(VertexID vID, const Vector3<Real> &v);
+	virtual void SetVertex(VertexID vID, const Vector3 &v);
 
 	EdgeID FindEdge(VertexID vA, VertexID vB) const;
 	MeshResult GetVtxEdges(VertexID vID, std::vector<int> &vEdges) const;
@@ -118,11 +118,11 @@ protected:
 	unsigned int m_flags;
 
 	struct Vertex {
-		Vector3<Real> v;
+		Vector3 v;
 
 		unsigned short bits;
 		short ref;
-		inline Vector3<Real> printable() const { return v; }
+		inline Vector3 printable() const { return v; }
 		inline int get_refcount() const { return (int)ref; }
 		inline void set_refcount(int i) { ref = (short)i; }
 	};
@@ -267,13 +267,13 @@ bool OldDMesh3<Real, VectorType>::IsEdge(EdgeID eID) const {
 }
 
 template <typename Real, template <typename> class VectorType>
-const Vector3<Real> &OldDMesh3<Real, VectorType>::GetVertex(VertexID vID) const {
+const Vector3 &OldDMesh3<Real, VectorType>::GetVertex(VertexID vID) const {
 	return m_vVertices.isValid(vID) ?
 					 m_vVertices[vID].v :
 					 InvalidVertex;
 }
 template <typename Real, template <typename> class VectorType>
-void OldDMesh3<Real, VectorType>::SetVertex(VertexID vID, const Vector3<Real> &v) {
+void OldDMesh3<Real, VectorType>::SetVertex(VertexID vID, const Vector3 &v) {
 	if (m_vVertices.isValid(vID))
 		m_vVertices[vID].v = v;
 }

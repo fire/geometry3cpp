@@ -4,7 +4,7 @@
 
 #include "scene/resources/mesh.h"
 
-#include "MeshboundaryLoop.h"
+#include "MeshBoundaryLoop.h"
 #include "profile_util.h"
 #include "src/geometry/g3types.h"
 #include "src/mesh/DMesh3Builder.h"
@@ -23,7 +23,7 @@
 
 #include "../../godot/scene/resources/surface_tool.h"
 #include "geometry3_process.h"
-#include "src/geometry/MeshboundaryLoop.h"
+#include "src/geometry/MeshBoundaryLoop.h"
 #include "src/mesh/DMesh3.h"
 #include "src/mesh/MeshConstraints.h"
 #include "src/spatial/DCurveProject.h"
@@ -43,7 +43,7 @@ void PreserveAllBoundaryEdges(g3::MeshConstraintsPtr cons,
 			cons->SetOrUpdateEdgeConstraint(edge_id,
 					g3::EdgeConstraint::FullyConstrained());
 
-			Index2i ev = p_mesh->GetEdgeV(edge_id);
+			Vector2i ev = p_mesh->GetEdgeV(edge_id);
 			VertexConstraint vc = VertexConstraint::Pinned();
 			cons->SetOrUpdateVertexConstraint(ev.x(), vc);
 			cons->SetOrUpdateVertexConstraint(ev.y(), vc);
@@ -90,15 +90,6 @@ size_t RemoveFinTriangles(g3::DMesh3Ptr mesh,
 	return nRemoved;
 }
 
-DCurve3Ptr ExtractLoopV(g3::DMesh3Ptr mesh, std::vector<int> vertices) {
-	DCurve3Ptr curve = std::make_shared<DCurve3>();
-	for (int vid : vertices) {
-		curve->AppendVertex(mesh->GetVertex(vid));
-	}
-	curve->SetClosed(true);
-	return curve;
-}
-
 // for all vertices in loopV, constrain to target
 // for all edges in loopV, disable flips and constrain to target
 static void ConstrainVtxLoopToMesh(MeshConstraintsPtr cons, DMesh3Ptr mesh,
@@ -143,19 +134,19 @@ static void ConstrainVtxLoopTo(Remesher r, std::vector<int> loopV,
 }
 
 // https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-// void PreserveBoundaryLoops(g3::MeshConstraintsPtr cons, g3::DMesh3Ptr mesh) {
-//   std::list<g3::EdgeLoopPtr> loops = MeshBoundaryLoops(mesh).Loops;
-//   for (EdgeLoopPtr loop : loops) {
-//     DCurve3Ptr loopC = ExtractLoopV(mesh, loop->Vertices);
-//     IProjectionTargetPtr target =
-//         std::make_shared<DCurveProjectionTarget>(loopC);
-//     std::list<int> loop_verts;
-//     for (int index : loop->Vertices) {
-//       loop_verts.push_back(index);
-//     }
-//     ConstrainVtxLoopToMesh(cons, mesh, loop_verts, target);
-//   }
-// }
+void PreserveBoundaryLoops(g3::MeshConstraintsPtr cons, g3::DMesh3Ptr mesh) {
+  std::list<g3::EdgeLoopPtr> loops = MeshBoundaryLoops(mesh).Loops;
+  for (EdgeLoopPtr loop : loops) {
+    DCurve3Ptr loopC = ExtractLoopV(mesh, loop->Vertices);
+    IProjectionTargetPtr target =
+        std::make_shared<DCurveProjectionTarget>(loopC);
+    std::list<int> loop_verts;
+    for (int index : loop->Vertices) {
+      loop_verts.push_back(index);
+    }
+    ConstrainVtxLoopToMesh(cons, mesh, loop_verts, target);
+  }
+}
 
 static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
 		double &maxEdgeLen, double &avgEdgeLen,
@@ -191,19 +182,19 @@ static void EdgeLengthStats(DMesh3Ptr mesh, double &minEdgeLen,
 	avgEdgeLen /= (double)avg_count;
 }
 
-// https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
-// void preserve_group_region_border_loops(DMesh3Ptr mesh) {
-//   int set_id = 1;
-//   int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
-//   for (int[] tri_list : group_tri_sets) {
-//     MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
-//     tri_list); foreach (EdgeLoop loop in loops) {
-//       MeshConstraintUtil.ConstrainVtxLoopTo(
-//           r, loop.Vertices, new DCurveProjectionTarget(loop.ToCurve()),
-//           set_id++);
-//     }
-//   }
-// }
+//https://github.com/gradientspace/geometry3Sharp/blob/master/mesh/MeshConstraintUtil.cs
+void preserve_group_region_border_loops(DMesh3Ptr mesh) {
+  int set_id = 1;
+  // int[][] group_tri_sets = FaceGroupUtil.FindTriangleSetsByGroup(mesh);
+  // for (int[] tri_list : group_tri_sets) {
+  //   MeshRegionBoundaryLoops loops = new MeshRegionBoundaryLoops(mesh,
+  //   tri_list); foreach (EdgeLoop loop in loops) {
+  //     MeshConstraintUtil.ConstrainVtxLoopTo(
+  //         r, loop.Vertices, new DCurveProjectionTarget(loop.ToCurve()),
+  //         set_id++);
+  //   }
+  // }
+}
 
 Array geometry3_process(Array p_mesh) {
 	uint32_t ticks = OS::get_singleton()->get_ticks_msec();
@@ -287,33 +278,34 @@ Array geometry3_process(Array p_mesh) {
 		g3_mesh->AppendTriangle(new_tri);
 	}
 	Remesher r(g3_mesh);
-  // broke compactinplace
-	// g3_mesh->CompactInPlace();
-	// g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
+	g3::MeshConstraintsPtr cons = std::make_shared<MeshConstraints>();
 	// PreserveAllBoundaryEdges(cons, g3_mesh);
-	// r.SmoothType = Remesher::SmoothTypes::Uniform;
-	// r.SetExternalConstraints(cons);
-	// r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
-	// // PreserveBoundaryLoops(cons, g3_mesh);
-	// // http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
-	// int iterations = 2;
-	// r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-06-29 FIRE
-	// r.PreventNormalFlips = true;
-	// double avg_edge_len = 0.0;
-	// double min_edge_len = 0.0;
-	// double max_edge_len = 0.0;
-	// EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
-	// print_line(vformat("target edge len %.2f", avg_edge_len));
-	// r.SetTargetEdgeLength(avg_edge_len);
-	// r.SmoothSpeedT = 1.0f / iterations;
-	// r.Precompute();
-	// for (int k = 0; k < iterations; ++k) {
-	// 	r.BasicRemeshPass();
-	// 	print_line("remesh pass " + itos(k));
-	// }
-	// print_line("remesh done");
-	// RemoveFinTriangles(g3_mesh, true);
-	// std::cout << g3_mesh->MeshInfoString();
+	r.SmoothType = Remesher::SmoothTypes::Uniform;
+	r.SetExternalConstraints(cons);
+	r.SetProjectionTarget(MeshProjectionTarget::AutoPtr(g3_mesh, true));
+	PreserveBoundaryLoops(cons, g3_mesh);
+	// http://www.gradientspace.com/tutorials/2018/7/5/remeshing-and-constraints
+	int iterations = 2;
+	r.EnableParallelSmooth = true; // TODO Implement parallel smooth 2021-06-29 FIRE
+	r.PreventNormalFlips = true;
+	double avg_edge_len = 0.0;
+	double min_edge_len = 0.0;
+	double max_edge_len = 0.0;
+	EdgeLengthStats(g3_mesh, min_edge_len, max_edge_len, avg_edge_len);
+	print_line(vformat("avg edge len %.2f", avg_edge_len));
+  double target_edge_len = avg_edge_len;
+  target_edge_len /= 0.5f;
+	print_line(vformat("target edge len %.2f", target_edge_len));
+	r.SetTargetEdgeLength(target_edge_len);
+	r.SmoothSpeedT = 1.0f / iterations;
+	r.Precompute();
+	for (int k = 0; k < iterations; ++k) {
+		r.BasicRemeshPass();
+		print_line("remesh pass " + itos(k));
+	}
+	print_line("remesh done");
+	RemoveFinTriangles(g3_mesh, true);
+	std::cout << g3_mesh->MeshInfoString();
 	vertex_array.clear();
 	index_array.clear();
 	uv1_array.clear();

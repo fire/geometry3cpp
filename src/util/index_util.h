@@ -1,6 +1,11 @@
 #pragma once
 
+#include "src/mesh/DMesh3.h"
+
 namespace g3 {
+
+static constexpr int InvalidID = -1;
+static constexpr int NonManifoldID = -2;
 
 // test if [a0,a1] and [b0,b1] are the same pair, ignoring order
 template <typename T>
@@ -132,18 +137,18 @@ Vector3i apply_map(const Vector3i &vIn, Func mapper) {
 	return Vector3i(mapper[vIn[0]], mapper[vIn[1]], mapper[vIn[2]]);
 }
 
-// set v[i] = mapper(v[i])
-template <typename T, typename Func>
-void apply_map(Vector3<T> &v, Func mapper) {
-	v[0] = mapper[v[0]];
-	v[1] = mapper[v[1]];
-	v[2] = mapper[v[2]];
-}
+// // set v[i] = mapper(v[i])
+// template <typename T, typename Func>
+// void apply_map(Vector3<T> &v, Func mapper) {
+// 	v[0] = mapper[v[0]];
+// 	v[1] = mapper[v[1]];
+// 	v[2] = mapper[v[2]];
+// }
 
-// return v[i] = mapper(v[i])
-template <typename T, typename Func>
-Vector3<T> apply_map(const Vector3<T> &vIn, Func mapper) {
-	return Vector3<T>(mapper[vIn[0]], mapper[vIn[1]], mapper[vIn[2]]);
-}
+// // return v[i] = mapper(v[i])
+// template <typename T, typename Func>
+// Vector3<T> apply_map(const Vector3<T> &vIn, Func mapper) {
+// 	return Vector3<T>(mapper[vIn[0]], mapper[vIn[1]], mapper[vIn[2]]);
+// }
 
 } // end namespace g3

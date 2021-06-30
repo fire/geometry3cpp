@@ -37,7 +37,7 @@ public:
 	/// Find the triangle closest to p, and distance to it, within distance fMaxDist, or return InvalidID
 	/// Use MeshQueries.TriangleDistance() to get more information
 	/// </summary>
-	virtual int FindNearestTriangle(const Vector3d &p, double &fNearestDistSqr, double fMaxDist = DOUBLE_MAX) override {
+	virtual int FindNearestTriangle(const Vector3 &p, double &fNearestDistSqr, double fMaxDist = DOUBLE_MAX) override {
 		if (mesh_timestamp != mesh->ShapeTimestamp())
 			throw std::runtime_error("DMeshAABBTree3.FindNearestTriangle: mesh has been modified since tree construction");
 
@@ -46,7 +46,7 @@ public:
 		find_nearest_tri(root_index, p, fNearestDistSqr, tNearID);
 		return tNearID;
 	}
-	void find_nearest_tri(int iBox, const Vector3d &p, double &fNearestSqr, int &tID) {
+	void find_nearest_tri(int iBox, const Vector3 &p, double &fNearestSqr, int &tID) {
 		int idx = box_to_index[iBox];
 		if (idx < triangles_end) { // triange-list case, array is [N t1 t2 ... tN]
 			int num_tris = index_list[idx];
@@ -100,7 +100,7 @@ public:
 
 	virtual bool SupportsPointContainment() override { return false; }
 
-	virtual bool IsInside(const Vector3d &p) override {
+	virtual bool IsInside(const Vector3 &p) override {
 		return false;
 	}
 
@@ -108,7 +108,7 @@ public:
 	public:
 		// return false to terminate this branch
 		// arguments are box and depth in tree
-		std::function<bool(const AxisAlignedBox3d &, int)> NextBoxF = [](const AxisAlignedBox3d &box, int depth) { return true; };
+		std::function<bool(const AABB &, int)> NextBoxF = [](const AABB &box, int depth) { return true; };
 
 		std::function<void(int)> NextTriangleF = [](int tID) {};
 	};
@@ -160,26 +160,26 @@ protected:
 	// Internals - data structures, construction, etc
 	//
 
-	AxisAlignedBox3d get_box(int iBox) {
-		const Vector3d &c = box_centers[iBox];
-		const Vector3d &e = box_extents[iBox];
-		Vector3d Min = c - e, Max = c + e;
-		return AxisAlignedBox3d(Min.data(), Max.data());
+	AABB get_box(int iBox) {
+		const Vector3 &c = box_centers[iBox];
+		const Vector3 &e = box_extents[iBox];
+		Vector3 Min = c - e, Max = c + e;
+		return AABB(Min.data(), Max.data());
 	}
 
-	AxisAlignedBox3d get_box_eps(int iBox, double epsilon = Wml::Mathd::ZERO_TOLERANCE) {
-		const Vector3d &c = box_centers[iBox];
-		Vector3d e = box_extents[iBox];
+	AABB get_box_eps(int iBox, double epsilon = Wml::Mathd::ZERO_TOLERANCE) {
+		const Vector3 &c = box_centers[iBox];
+		Vector3 e = box_extents[iBox];
 		e[0] += epsilon;
 		e[1] += epsilon;
 		e[2] += epsilon;
-		Vector3d Min = c - e, Max = c + e;
-		return AxisAlignedBox3d(Min.data(), Max.data());
+		Vector3 Min = c - e, Max = c + e;
+		return AABB(Min.data(), Max.data());
 	}
 
-	double box_distance_sqr(int iBox, const Vector3d &v) {
-		const Vector3d &c = box_centers[iBox];
-		const Vector3d &e = box_extents[iBox];
+	double box_distance_sqr(int iBox, const Vector3 &v) {
+		const Vector3 &c = box_centers[iBox];
+		const Vector3 &e = box_extents[iBox];
 
 		// per-axis delta is max(abs(p-c) - e, 0)... ?
 		double dist_sqr = ((v - c).cwiseAbs() - e).cwiseMax(0).squaredNorm();
@@ -190,8 +190,8 @@ protected:
 	//   - box_to_index is a pointer into index_list
 	//   - box_centers and box_extents are the centers/extents of the bounding boxes
 	dvector<int> box_to_index;
-	dvector<Vector3d> box_centers;
-	dvector<Vector3d> box_extents;
+	dvector<Vector3> box_centers;
+	dvector<Vector3> box_extents;
 
 	// list of indices for a given box. There is *no* marker/sentinel between
 	// boxes, you have to get the starting index from box_to_index[]
@@ -213,8 +213,8 @@ protected:
 
 	struct boxes_set {
 		dvector<int> box_to_index;
-		dvector<Vector3d> box_centers;
-		dvector<Vector3d> box_extents;
+		dvector<Vector3> box_centers;
+		dvector<Vector3> box_extents;
 		dvector<int> index_list;
 		int iBoxCur;
 		int iIndicesCur;
@@ -229,9 +229,9 @@ protected:
 		// triangles that have infinite/garbage vertices...
 		int i = 0;
 		std::vector<int> triangles(mesh->TriangleCount());
-		std::vector<Vector3d> centers(mesh->TriangleCount());
+		std::vector<Vector3> centers(mesh->TriangleCount());
 		for (int ti : mesh->TriangleIndices()) {
-			Vector3d centroid = mesh->GetTriCentroid(ti);
+			Vector3 centroid = mesh->GetTriCentroid(ti);
 			double d2 = centroid.squaredNorm();
 			bool bInvalid = isnan(d2) || (isfinite(d2) == false);
 			gDevAssert(bInvalid == false);
@@ -244,7 +244,7 @@ protected:
 
 		boxes_set tris;
 		boxes_set nodes;
-		AxisAlignedBox3d rootBox;
+		AABB rootBox;
 		int rootnode =
 				//(bSorted) ? split_tri_set_sorted(triangles, centers, 0, mesh->TriangleCount, 0, TopDownLeafMaxTriCount, tris, nodes, out rootBox) :
 				split_tri_set_midpoint(triangles, centers, 0, mesh->TriangleCount(), 0, TopDownLeafMaxTriCount, tris, nodes, rootBox);
@@ -282,10 +282,10 @@ protected:
 
 	int split_tri_set_midpoint(
 			std::vector<int> &triangles,
-			std::vector<Vector3d> &centers,
+			std::vector<Vector3> &centers,
 			int iStart, int iCount, int depth, int minTriCount,
-			boxes_set &tris, boxes_set &nodes, AxisAlignedBox3d &box) {
-		box = AxisAlignedBox3d::EMPTY;
+			boxes_set &tris, boxes_set &nodes, AABB &box) {
+		box = AABB::EMPTY;
 		int iBox = -1;
 
 		if (iCount < minTriCount) {
@@ -330,7 +330,7 @@ protected:
 				if (l >= r)
 					break; //done!
 							//swap
-				Vector3d tmpc = centers[iStart + l];
+				Vector3 tmpc = centers[iStart + l];
 				centers[iStart + l] = centers[iStart + r];
 				centers[iStart + r] = tmpc;
 				int tmpt = triangles[iStart + l];
@@ -348,7 +348,7 @@ protected:
 		}
 
 		// create child boxes
-		AxisAlignedBox3d box1;
+		AABB box1;
 		int child0 = split_tri_set_midpoint(triangles, centers, iStart, n0, depth + 1, minTriCount, tris, nodes, box);
 		int child1 = split_tri_set_midpoint(triangles, centers, iStart + n0, n1, depth + 1, minTriCount, tris, nodes, box1);
 		box.Contain(box1);
@@ -396,14 +396,14 @@ private:
 		if (idx < triangles_end) {
 			// triange-list case, array is [N t1 t2 ... tN]
 			int n = index_list[idx];
-			AxisAlignedBox3d box = get_box_eps(iBox);
+			AABB box = get_box_eps(iBox);
 			for (int i = 1; i <= n; ++i) {
 				int ti = index_list[idx + i];
 				tri_counts[ti]++;
 
 				Index3i tv = mesh->GetTriangle(ti);
 				for (int j = 0; j < 3; ++j) {
-					Vector3d v = mesh->GetVertex(tv[j]);
+					Vector3 v = mesh->GetVertex(tv[j]);
 					if (!box.Contains(v)) {
 						break;
 					}
@@ -431,7 +431,7 @@ private:
 	}
 	// do full tree traversal below iBox and make sure that all triangles are further
 	// than box-distance-sqr
-	void debug_check_child_tri_distances(int iBox, const Vector3d &p) {
+	void debug_check_child_tri_distances(int iBox, const Vector3 &p) {
 		double fBoxDistSqr = box_distance_sqr(iBox, p);
 
 		// [TODO]
@@ -450,12 +450,12 @@ private:
 
 	// do full tree traversal below iBox to make sure that all child triangles are contained
 	void debug_check_child_tris_in_box(int iBox) {
-		AxisAlignedBox3d box = get_box_eps(iBox);
+		AABB box = get_box_eps(iBox);
 		TreeTraversal *t = new TreeTraversal();
 		t->NextTriangleF = [&](int tID) {
 			Index3i tv = mesh->GetTriangle(tID);
 			for (int j = 0; j < 3; ++j) {
-				Vector3d v = mesh->GetVertex(tv[j]);
+				Vector3 v = mesh->GetVertex(tv[j]);
 				if (box.Contains(v) == false) {
 					return;
 					// gBreakToDebugger();

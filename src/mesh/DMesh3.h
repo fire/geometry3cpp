@@ -1,9 +1,10 @@
 #pragma once
 
-#include <Frame3.h>
+#include "src/geometry/Frame3.h"
 #include <g3types.h>
 
 #include <map>
+#include <memory>
 #include <string>
 
 #include <VectorUtil.h>
@@ -15,6 +16,8 @@
 #include <small_list_set.h>
 
 namespace g3 {
+
+static constexpr int InvalidGroupID = -1;
 
 enum class MeshResult {
 	Ok = 0,
@@ -61,40 +64,40 @@ enum class MeshHints {
 * Abstracts construction of meshes, so that we can construct different types, etc
 */
 struct NewVertexInfo {
-	Vector3d v;
-	Vector3f n, c;
-	Vector2f uv;
+	Vector3 v;
+	Vector3 n, c;
+	Vector2 uv;
 	bool bHaveN, bHaveUV, bHaveC;
 
 	NewVertexInfo() {
-		this->v = Vector3d::Zero();
-		n = c = Vector3f::Zero();
-		uv = Vector2f::Zero();
+		this->v = Vector3();
+		n = c = Vector3();
+		uv = Vector2();
 		bHaveN = bHaveC = bHaveUV = false;
 	}
-	NewVertexInfo(const Vector3d &v) {
+	NewVertexInfo(const Vector3 &v) {
 		this->v = v;
-		n = c = Vector3f::Zero();
-		uv = Vector2f::Zero();
+		n = c = Vector3();
+		uv = Vector2();
 		bHaveN = bHaveC = bHaveUV = false;
 	}
-	NewVertexInfo(const Vector3d &v, const Vector3f &n) {
+	NewVertexInfo(const Vector3 &v, const Vector3 &n) {
 		this->v = v;
 		this->n = n;
-		c = Vector3f::Zero();
-		uv = Vector2f::Zero();
+		c = Vector3();
+		uv = Vector2();
 		bHaveN = true;
 		bHaveC = bHaveUV = false;
 	}
-	NewVertexInfo(const Vector3d &v, const Vector3f &n, const Vector3f &c) {
+	NewVertexInfo(const Vector3 &v, const Vector3 &n, const Vector3 &c) {
 		this->v = v;
 		this->n = n;
 		this->c = c;
-		uv = Vector2f::Zero();
+		uv = Vector2();
 		bHaveN = bHaveC = true;
 		bHaveUV = false;
 	}
-	NewVertexInfo(const Vector3d &v, const Vector3f &n, const Vector3f &c, const Vector2f &uv) {
+	NewVertexInfo(const Vector3 &v, const Vector3 &n, const Vector3 &c, const Vector2 &uv) {
 		this->v = v;
 		this->n = n;
 		this->c = c;
@@ -152,9 +155,9 @@ public:
 	static constexpr int InvalidID = -1;
 	static constexpr int NonManifoldID = -2;
 
-	static Vector3d InvalidVertex() { return Vector3d(max_double, 0, 0); }
-	static Index3i InvalidTriangle() { return Index3i(InvalidID, InvalidID, InvalidID); }
-	static Index2i InvalidEdge() { return Index2i(InvalidID, InvalidID); }
+	static Vector3 InvalidVertex() { return Vector3(max_double, 0, 0); }
+	static Vector3i InvalidTriangle() { return Vector3i(InvalidID, InvalidID, InvalidID); }
+	static Vector2i InvalidEdge() { return Vector2i(InvalidID, InvalidID); }
 
 protected:
 	refcount_vector vertices_refcount;
@@ -242,7 +245,7 @@ public:
 	// construct DMesh3 from libigl mesh representation
 	DMesh3(const Eigen::MatrixXd &V, const Eigen::MatrixXi &F) :
 			DMesh3(false, false, false, false) {
-		gDevAssert(V.cols() == 3);
+		// gDevAssert(V.cols() == 3);
 		int NV = (int)V.rows();
 		for (int k = 0; k < NV; ++k) {
 			int vid = vertices_refcount.allocate();
@@ -254,7 +257,7 @@ public:
 		}
 		int NT = (int)F.rows();
 		for (int k = 0; k < NT; ++k) {
-			AppendTriangle(Index3i(F(k, 0), F(k, 1), F(k, 2)), -1);
+			AppendTriangle(Vector3i(F(k, 0), F(k, 1), F(k, 2)), -1);
 		}
 	}
 
@@ -455,8 +458,8 @@ public:
 
 		// [TODO] would be much faster to explicitly copy triangle & edge data structures!!
 		for (int tid : TriangleIndices()) {
-			Index3i t = copy.GetTriangle(tid);
-			t = Index3i(mapV[t.x()], mapV[t.y()], mapV[t.z()]);
+			Vector3i t = copy.GetTriangle(tid);
+			t = Vector3i(mapV[t.x], mapV[t.y], mapV[t.z]);
 			int g = (copy.HasTriangleGroups()) ? copy.GetTriangleGroup(tid) : InvalidID;
 			AppendTriangle(t, g);
 			max_group_id = std::max(max_group_id, g + 1);
@@ -523,7 +526,7 @@ public:
 	//    // [TODO] would be much faster to explicitly copy triangle & edge data structures!!
 
 	//    foreach (int tid in copy.TriangleIndices()) {
-	//        Index3i t = copy.GetTriangle(tid);
+	//        Vector3i t = copy.GetTriangle(tid);
 	//        t.a = mapV[t.a]; t.b = mapV[t.b]; t.c = mapV[t.c];
 	//        int g = (copy.HasTriangleGroups) ? copy.GetTriangleGroup(tid) : InvalidID;
 	//        AppendTriangle(t, g);
@@ -627,81 +630,82 @@ protected:
 public:
 	// getters
 
-	Vector3d GetVertex(int vID) const {
+	Vector3 GetVertex(int vID) const {
 		debug_check_is_vertex(vID);
 		int i = 3 * vID;
-		return Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
+		return Vector3(vertices[i], vertices[i + 1], vertices[i + 2]);
 	}
-	Vector3f GetVertexf(int vID) const {
+	Vector3 GetVertexf(int vID) const {
 		debug_check_is_vertex(vID);
 		int i = 3 * vID;
-		return Vector3f((float)vertices[i], (float)vertices[i + 1], (float)vertices[i + 2]);
+		return Vector3((float)vertices[i], (float)vertices[i + 1], (float)vertices[i + 2]);
 	}
 
-	void SetVertex(int vID, const Vector3d &vNewPos) {
-		gDevAssert(IsFinite(vNewPos));
+	void SetVertex(int vID, const Vector3 &vNewPos) {
+		// gDevAssert(!Math::is_nan(vNewPos));
 		debug_check_is_vertex(vID);
 
 		int i = 3 * vID;
-		vertices[i] = vNewPos.x();
-		vertices[i + 1] = vNewPos.y();
-		vertices[i + 2] = vNewPos.z();
+		vertices[i] = vNewPos.x;
+		vertices[i + 1] = vNewPos.y;
+		vertices[i + 2] = vNewPos.z;
 		updateTimeStamp(true);
 	}
 
-	Vector3f GetVertexNormal(int vID) const {
-		if (HasVertexNormals() == false)
-			return Vector3f::UnitY();
+	Vector3 GetVertexNormal(int vID) const {
+		if (HasVertexNormals() == false) {
+			return Vector3(0.0f, 1.0f, 0.0f);
+		}
 
 		debug_check_is_vertex(vID);
 		int i = 3 * vID;
-		return Vector3f(normals[i], normals[i + 1], normals[i + 2]);
+		return Vector3(normals[i], normals[i + 1], normals[i + 2]);
 	}
 
-	void SetVertexNormal(int vID, Vector3f vNewNormal) {
+	void SetVertexNormal(int vID, Vector3 vNewNormal) {
 		if (HasVertexNormals()) {
 			debug_check_is_vertex(vID);
 			int i = 3 * vID;
-			normals[i] = vNewNormal.x();
-			normals[i + 1] = vNewNormal.y();
-			normals[i + 2] = vNewNormal.z();
+			normals[i] = vNewNormal.x;
+			normals[i + 1] = vNewNormal.y;
+			normals[i + 2] = vNewNormal.z;
 			updateTimeStamp(false);
 		}
 	}
 
-	Vector3f GetVertexColor(int vID) const {
+	Vector3 GetVertexColor(int vID) const {
 		if (HasVertexColors() == false)
-			return Vector3f::Ones();
+			return Vector3(1.0f, 1.0f, 1.0f);
 		debug_check_is_vertex(vID);
 		int i = 3 * vID;
-		return Vector3f(colors[i], colors[i + 1], colors[i + 2]);
+		return Vector3(colors[i], colors[i + 1], colors[i + 2]);
 	}
 
-	void SetVertexColor(int vID, Vector3f vNewColor) {
+	void SetVertexColor(int vID, Vector3 vNewColor) {
 		if (HasVertexColors()) {
 			debug_check_is_vertex(vID);
 			int i = 3 * vID;
-			colors[i] = vNewColor.x();
-			colors[i + 1] = vNewColor.y();
-			colors[i + 2] = vNewColor.z();
+			colors[i] = vNewColor.x;
+			colors[i + 1] = vNewColor.y;
+			colors[i + 2] = vNewColor.z;
 			updateTimeStamp(false);
 		}
 	}
 
-	Vector2f GetVertexUV(int vID) const {
+	Vector2 GetVertexUV(int vID) const {
 		if (HasVertexUVs() == false)
-			return Vector2f::Zero();
+			return Vector2();
 		debug_check_is_vertex(vID);
 		int i = 2 * vID;
-		return Vector2f(uv[i], uv[i + 1]);
+		return Vector2(uv[i], uv[i + 1]);
 	}
 
-	void SetVertexUV(int vID, Vector2f vNewUV) {
+	void SetVertexUV(int vID, Vector2 vNewUV) {
 		if (HasVertexUVs()) {
 			debug_check_is_vertex(vID);
 			int i = 2 * vID;
-			uv[i] = vNewUV.x();
-			uv[i + 1] = vNewUV.y();
+			uv[i] = vNewUV.x;
+			uv[i + 1] = vNewUV.y;
 			updateTimeStamp(false);
 		}
 	}
@@ -709,19 +713,19 @@ public:
 	bool GetVertex(int vID, NewVertexInfo &vinfo, bool bWantNormals, bool bWantColors, bool bWantUVs) const {
 		if (vertices_refcount.isValid(vID) == false)
 			return false;
-		vinfo.v = Vector3d(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]);
+		vinfo.v = Vector3(vertices[3 * vID], vertices[3 * vID + 1], vertices[3 * vID + 2]);
 		vinfo.bHaveN = vinfo.bHaveUV = vinfo.bHaveC = false;
 		if (HasVertexNormals() && bWantNormals) {
 			vinfo.bHaveN = true;
-			vinfo.n = Vector3f(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]);
+			vinfo.n = Vector3(normals[3 * vID], normals[3 * vID + 1], normals[3 * vID + 2]);
 		}
 		if (HasVertexColors() && bWantColors) {
 			vinfo.bHaveC = true;
-			vinfo.c = Vector3f(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]);
+			vinfo.c = Vector3(colors[3 * vID], colors[3 * vID + 1], colors[3 * vID + 2]);
 		}
 		if (HasVertexUVs() && bWantUVs) {
 			vinfo.bHaveUV = true;
-			vinfo.uv = Vector2f(uv[2 * vID], uv[2 * vID + 1]);
+			vinfo.uv = Vector2(uv[2 * vID], uv[2 * vID + 1]);
 		}
 		return true;
 	}
@@ -766,36 +770,36 @@ public:
 	/// by default, frame.Z is normal, and .X points along mesh edge
 	/// if bFrameNormalY, then frame.Y is normal (X still points along mesh edge)
 	/// </summary>
-	Frame3d GetVertexFrame(int vID, bool bFrameNormalY = false) const {
+	Frame3D GetVertexFrame(int vID, bool bFrameNormalY = false) const {
 		gDevAssert(HasVertexNormals());
 
 		int vi = 3 * vID;
-		Vector3d v(vertices[vi], vertices[vi + 1], vertices[vi + 2]);
-		Vector3d normal(normals[vi], normals[vi + 1], normals[vi + 2]);
+		Vector3 v(vertices[vi], vertices[vi + 1], vertices[vi + 2]);
+		Vector3 normal(normals[vi], normals[vi + 1], normals[vi + 2]);
 		int eid = vertex_edges.First(vID);
 		int ovi = 3 * edge_other_v(eid, vID);
-		Vector3d ov(vertices[ovi], vertices[ovi + 1], vertices[ovi + 2]);
-		Vector3d edge = (ov - v);
+		Vector3 ov(vertices[ovi], vertices[ovi + 1], vertices[ovi + 2]);
+		Vector3 edge = (ov - v);
 		edge.normalize();
 
-		Vector3d other = normal.cross(edge);
+		Vector3 other = normal.cross(edge);
 		edge = other.cross(normal);
 		if (bFrameNormalY)
-			return Frame3d(v, edge, normal, -other);
+			return Frame3D(v, edge, normal, -other);
 		else
-			return Frame3d(v, edge, other, normal);
+			return Frame3D(v, edge, other, normal);
 	}
 
-	Index3i GetTriangle(int tID) const {
+	Vector3i GetTriangle(int tID) const {
 		debug_check_is_triangle(tID);
 		int i = 3 * tID;
-		return Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
+		return Vector3i(triangles[i], triangles[i + 1], triangles[i + 2]);
 	}
 
-	Index3i GetTriEdges(int tID) const {
+	Vector3i GetTriEdges(int tID) const {
 		debug_check_is_triangle(tID);
 		int i = 3 * tID;
-		return Index3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
+		return Vector3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
 	}
 
 	int GetTriEdge(int tid, int j) const {
@@ -803,10 +807,10 @@ public:
 		return triangle_edges[3 * tid + j];
 	}
 
-	Index3i GetTriNeighbourTris(int tID) const {
+	Vector3i GetTriNeighbourTris(int tID) const {
 		if (triangles_refcount.isValid(tID)) {
 			int tei = 3 * tID;
-			Index3i nbr_t = Index3i::Zero();
+			Vector3i nbr_t = Vector3i();
 			for (int j = 0; j < 3; ++j) {
 				int ei = 4 * triangle_edges[tei + j];
 				nbr_t[j] = (edges[ei + 2] == tID) ? edges[ei + 3] : edges[ei + 2];
@@ -845,46 +849,72 @@ public:
 		return ++max_group_id;
 	}
 
-	void GetTriVertices(int tID, Vector3d &v0, Vector3d &v1, Vector3d &v2) const {
+	void GetTriVertices(int tID, Vector3 &v0, Vector3 &v1, Vector3 &v2) const {
 		int ai = 3 * triangles[3 * tID];
-		v0.x() = vertices[ai];
-		v0.y() = vertices[ai + 1];
-		v0.z() = vertices[ai + 2];
+		v0.x = vertices[ai];
+		v0.y = vertices[ai + 1];
+		v0.z = vertices[ai + 2];
 		int bi = 3 * triangles[3 * tID + 1];
-		v1.x() = vertices[bi];
-		v1.y() = vertices[bi + 1];
-		v1.z() = vertices[bi + 2];
+		v1.x = vertices[bi];
+		v1.y = vertices[bi + 1];
+		v1.z = vertices[bi + 2];
 		int ci = 3 * triangles[3 * tID + 2];
-		v2.x() = vertices[ci];
-		v2.y() = vertices[ci + 1];
-		v2.z() = vertices[ci + 2];
+		v2.x = vertices[ci];
+		v2.y = vertices[ci + 1];
+		v2.z = vertices[ci + 2];
 	}
 
-	Vector3d GetTriVertex(int tid, int j) const {
+	Vector3 GetTriVertex(int tid, int j) const {
 		int a = triangles[3 * tid + j];
-		return Vector3d(vertices[3 * a], vertices[3 * a + 1], vertices[3 * a + 2]);
+		return Vector3(vertices[3 * a], vertices[3 * a + 1], vertices[3 * a + 2]);
 	}
 
-	Vector3d GetTriBaryPoint(int tID, double bary0, double bary1, double bary2) const {
+	Vector3 GetTriBaryPoint(int tID, double bary0, double bary1, double bary2) const {
 		int ai = 3 * triangles[3 * tID],
 			bi = 3 * triangles[3 * tID + 1],
 			ci = 3 * triangles[3 * tID + 2];
-		return Vector3d(
+		return Vector3(
 				(bary0 * vertices[ai] + bary1 * vertices[bi] + bary2 * vertices[ci]),
 				(bary0 * vertices[ai + 1] + bary1 * vertices[bi + 1] + bary2 * vertices[ci + 1]),
 				(bary0 * vertices[ai + 2] + bary1 * vertices[bi + 2] + bary2 * vertices[ci + 2]));
 	}
 
-	Vector3d GetTriNormal(int tID) const {
-		Vector3d v0, v1, v2;
+	Vector3 GetTriNormal(int tID) const {
+		Vector3 v0, v1, v2;
 		GetTriVertices(tID, v0, v1, v2);
-		return g3::Normal(v0, v1, v2);
+		return Normal(v0, v1, v2, nullptr);
+	}
+
+	real_t Area(const Vector3 &vTriVtx1,
+			const Vector3 &vTriVtx2,
+			const Vector3 &vTriVtx3) const {
+		Vector3 edge1(vTriVtx2 - vTriVtx1);
+		Vector3 edge2(vTriVtx3 - vTriVtx1);
+		Vector3 vCross(edge1.cross(edge2));
+
+		return 0.5 * vCross.length();
 	}
 
 	double GetTriArea(int tID) const {
-		Vector3d v0, v1, v2;
+		Vector3 v0, v1, v2;
 		GetTriVertices(tID, v0, v1, v2);
 		return Area(v0, v1, v2);
+	}
+
+	Vector3 Normal(const Vector3 &vTriVtx1,
+			const Vector3 &vTriVtx2,
+			const Vector3 &vTriVtx3, real_t *pArea) const {
+		Vector3 edge1(vTriVtx2 - vTriVtx1);
+		Vector3 edge2(vTriVtx3 - vTriVtx1);
+		if (pArea) {
+			real_t fDot = edge1.dot(edge2);
+			*pArea = (real_t)0.5 * sqrt(edge1.length_squared() * edge2.length_squared() - fDot * fDot);
+		}
+		edge1.normalize();
+		edge2.normalize();
+		Vector3 vCross(edge1.cross(edge2));
+		vCross.normalize();
+		return vCross;
 	}
 
 	/// <summary>
@@ -892,23 +922,22 @@ public:
 	/// lookups and computes normal & area simultaneously. *However* does not produce
 	/// the same normal/area as separate calls, because of this.
 	/// </summary>
-	void GetTriInfo(int tID, Vector3d &normal, double &fArea, Vector3d &vCentroid) const {
-		Vector3d v0, v1, v2;
+	void GetTriInfo(int tID, Vector3 &normal, double &fArea, Vector3 &vCentroid) const {
+		Vector3 v0, v1, v2;
 		GetTriVertices(tID, v0, v1, v2);
 		vCentroid = (1.0 / 3.0) * (v0 + v1 + v2);
 		fArea = Area(v0, v1, v2);
-		normal = Normal(v0, v1, v2);
-		//normal = FastNormalArea(ref v0, ref v1, ref v2, out fArea);
+		normal = Normal(v0, v1, v2, nullptr);
 	}
 
 	/// <summary>
 	/// interpolate vertex normals of triangle using barycentric coordinates
 	/// </summary>
-	Vector3d GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) {
+	Vector3 GetTriBaryNormal(int tID, double bary0, double bary1, double bary2) {
 		int ai = 3 * triangles[3 * tID],
 			bi = 3 * triangles[3 * tID + 1],
 			ci = 3 * triangles[3 * tID + 2];
-		Vector3d n = Vector3d(
+		Vector3 n = Vector3(
 				(bary0 * normals[ai] + bary1 * normals[bi] + bary2 * normals[ci]),
 				(bary0 * normals[ai + 1] + bary1 * normals[bi + 1] + bary2 * normals[ci + 1]),
 				(bary0 * normals[ai + 2] + bary1 * normals[bi + 2] + bary2 * normals[ci + 2]));
@@ -919,12 +948,12 @@ public:
 	/// <summary>
 	/// efficiently compute centroid of triangle
 	/// </summary>
-	Vector3d GetTriCentroid(int tID) const {
+	Vector3 GetTriCentroid(int tID) const {
 		int ai = 3 * triangles[3 * tID],
 			bi = 3 * triangles[3 * tID + 1],
 			ci = 3 * triangles[3 * tID + 2];
 		double f = (1.0 / 3.0);
-		return Vector3d(
+		return Vector3(
 				(vertices[ai] + vertices[bi] + vertices[ci]) * f,
 				(vertices[ai + 1] + vertices[bi + 1] + vertices[ci + 1]) * f,
 				(vertices[ai + 2] + vertices[bi + 2] + vertices[ci + 2]) * f);
@@ -938,13 +967,13 @@ public:
 		int ai = 3 * triangles[3 * tID],
 			bi = 3 * triangles[3 * tID + 1],
 			ci = 3 * triangles[3 * tID + 2];
-		vinfo.v = Vector3d(
+		vinfo.v = Vector3(
 				(bary0 * vertices[ai] + bary1 * vertices[bi] + bary2 * vertices[ci]),
 				(bary0 * vertices[ai + 1] + bary1 * vertices[bi + 1] + bary2 * vertices[ci + 1]),
 				(bary0 * vertices[ai + 2] + bary1 * vertices[bi + 2] + bary2 * vertices[ci + 2]));
 		vinfo.bHaveN = HasVertexNormals();
 		if (vinfo.bHaveN) {
-			vinfo.n = Vector3f(
+			vinfo.n = Vector3(
 					(float)(bary0 * normals[ai] + bary1 * normals[bi] + bary2 * normals[ci]),
 					(float)(bary0 * normals[ai + 1] + bary1 * normals[bi + 1] + bary2 * normals[ci + 1]),
 					(float)(bary0 * normals[ai + 2] + bary1 * normals[bi + 2] + bary2 * normals[ci + 2]));
@@ -952,7 +981,7 @@ public:
 		}
 		vinfo.bHaveC = HasVertexColors();
 		if (vinfo.bHaveC) {
-			vinfo.c = Vector3f(
+			vinfo.c = Vector3(
 					(float)(bary0 * colors[ai] + bary1 * colors[bi] + bary2 * colors[ci]),
 					(float)(bary0 * colors[ai + 1] + bary1 * colors[bi + 1] + bary2 * colors[ci + 1]),
 					(float)(bary0 * colors[ai + 2] + bary1 * colors[bi + 2] + bary2 * colors[ci + 2]));
@@ -962,7 +991,7 @@ public:
 			ai = 2 * triangles[3 * tID];
 			bi = 2 * triangles[3 * tID + 1];
 			ci = 2 * triangles[3 * tID + 2];
-			vinfo.uv = Vector2f(
+			vinfo.uv = Vector2(
 					(float)(bary0 * uv[ai] + bary1 * uv[bi] + bary2 * uv[ci]),
 					(float)(bary0 * uv[ai + 1] + bary1 * uv[bi + 1] + bary2 * uv[ci + 1]));
 		}
@@ -971,7 +1000,7 @@ public:
 	/// <summary>
 	/// construct bounding box of triangle as efficiently as possible
 	/// </summary>
-	AxisAlignedBox3d GetTriBounds(int tID) const {
+	AABB GetTriBounds(int tID) const {
 		int vi = 3 * triangles[3 * tID];
 		double x = vertices[vi], y = vertices[vi + 1], z = vertices[vi + 2];
 		double minx = x, maxx = x, miny = y, maxy = y, minz = z, maxz = z;
@@ -993,50 +1022,50 @@ public:
 			else if (z > maxz)
 				maxz = z;
 		}
-		return AxisAlignedBox3d(Wml::Vector3d(minx, miny, minz), Wml::Vector3d(maxx, maxy, maxz));
+		return AABB(Vector3(minx, miny, minz), Vector3(maxx, maxy, maxz));
 	}
 
 	/// <summary>
 	/// Construct stable frame at triangle centroid, where frame.Z is face normal,
 	/// and frame.X is aligned with edge nEdge of triangle.
 	/// </summary>
-	Frame3d GetTriFrame(int tID, int nEdge = 0) {
+	Frame3D GetTriFrame(int tID, int nEdge = 0) {
 		int ti = 3 * tID;
 		int a = 3 * triangles[ti + (nEdge % 3)];
 		int b = 3 * triangles[ti + ((nEdge + 1) % 3)];
 		int c = 3 * triangles[ti + ((nEdge + 2) % 3)];
-		Vector3d v1(vertices[a], vertices[a + 1], vertices[a + 2]);
-		Vector3d v2(vertices[b], vertices[b + 1], vertices[b + 2]);
-		Vector3d v3(vertices[c], vertices[c + 1], vertices[c + 2]);
+		Vector3 v1(vertices[a], vertices[a + 1], vertices[a + 2]);
+		Vector3 v2(vertices[b], vertices[b + 1], vertices[b + 2]);
+		Vector3 v3(vertices[c], vertices[c + 1], vertices[c + 2]);
 
-		Vector3d edge1 = v2 - v1;
+		Vector3 edge1 = v2 - v1;
 		edge1.normalize();
-		Vector3d edge2 = v3 - v2;
+		Vector3 edge2 = v3 - v2;
 		edge2.normalize();
-		Vector3d normal = edge1.cross(edge2);
+		Vector3 normal = edge1.cross(edge2);
 		normal.normalize();
 
-		Vector3d other = normal.cross(edge1);
+		Vector3 other = normal.cross(edge1);
 
-		Vector3d center = (v1 + v2 + v3) / 3;
-		return Frame3d(center, edge1, other, normal);
+		Vector3 center = (v1 + v2 + v3) / 3;
+		return Frame3D(center, edge1, other, normal);
 	}
 
 	/// <summary>
 	/// compute solid angle of oriented triangle tID relative to point p - see WindingNumber()
 	/// </summary>
-	double GetTriSolidAngle(int tID, const Vector3d &p) const {
+	double GetTriSolidAngle(int tID, const Vector3 &p) const {
 		int ti = 3 * tID;
 		int ta = 3 * triangles[ti];
-		Vector3d a(vertices[ta] - p.x(), vertices[ta + 1] - p.y(), vertices[ta + 2] - p.z());
+		Vector3 a(vertices[ta] - p.x, vertices[ta + 1] - p.y, vertices[ta + 2] - p.z);
 		int tb = 3 * triangles[ti + 1];
-		Vector3d b(vertices[tb] - p.x(), vertices[tb + 1] - p.y(), vertices[tb + 2] - p.z());
+		Vector3 b(vertices[tb] - p.x, vertices[tb + 1] - p.y, vertices[tb + 2] - p.z);
 		int tc = 3 * triangles[ti + 2];
-		Vector3d c(vertices[tc] - p.x(), vertices[tc + 1] - p.y(), vertices[tc + 2] - p.z());
+		Vector3 c(vertices[tc] - p.x, vertices[tc + 1] - p.y, vertices[tc + 2] - p.z);
 		// note: top and bottom are reversed here from formula in the paper? but it doesn't work otherwise...
-		double la = a.norm(), lb = b.norm(), lc = c.norm();
+		double la = a.length(), lb = b.length(), lc = c.length();
 		double bottom = (la * lb * lc) + a.dot(b) * lc + b.dot(c) * la + c.dot(a) * lb;
-		double top = a.x() * (b.y() * c.z() - c.y() * b.z()) - a.y() * (b.x() * c.z() - c.x() * b.z()) + a.z() * (b.x() * c.y() - c.x() * b.y());
+		double top = a.x * (b.y * c.z - c.y * b.z) - a.y * (b.x * c.z - c.x * b.z) + a.z * (b.x * c.y - c.x * b.y);
 		return 2.0 * atan2(top, bottom);
 	}
 
@@ -1047,11 +1076,11 @@ public:
 	double GetTriInternalAngleR(int tID, int i) {
 		int ti = 3 * tID;
 		int ta = 3 * triangles[ti];
-		Vector3d a(vertices[ta], vertices[ta + 1], vertices[ta + 2]);
+		Vector3 a(vertices[ta], vertices[ta + 1], vertices[ta + 2]);
 		int tb = 3 * triangles[ti + 1];
-		Vector3d b(vertices[tb], vertices[tb + 1], vertices[tb + 2]);
+		Vector3 b(vertices[tb], vertices[tb + 1], vertices[tb + 2]);
 		int tc = 3 * triangles[ti + 2];
-		Vector3d c(vertices[tc], vertices[tc + 1], vertices[tc + 2]);
+		Vector3 c(vertices[tc], vertices[tc + 1], vertices[tc + 2]);
 		if (i == 0)
 			return VectorAngleR((b - a).normalized(), (c - a).normalized());
 		else if (i == 1)
@@ -1060,37 +1089,37 @@ public:
 			return VectorAngleR((a - c).normalized(), (b - c).normalized());
 	}
 
-	Index2i GetEdgeV(int eID) const {
+	Vector2i GetEdgeV(int eID) const {
 		debug_check_is_edge(eID);
 		int i = 4 * eID;
-		return Index2i(edges[i], edges[i + 1]);
+		return Vector2i(edges[i], edges[i + 1]);
 	}
-	bool GetEdgeV(int eID, Vector3d &a, Vector3d &b) const {
+	bool GetEdgeV(int eID, Vector3 &a, Vector3 &b) const {
 		debug_check_is_edge(eID);
 		int iv0 = 3 * edges[4 * eID];
-		a.x() = vertices[iv0];
-		a.y() = vertices[iv0 + 1];
-		a.z() = vertices[iv0 + 2];
+		a.x = vertices[iv0];
+		a.y = vertices[iv0 + 1];
+		a.z = vertices[iv0 + 2];
 		int iv1 = 3 * edges[4 * eID + 1];
-		b.x() = vertices[iv1];
-		b.y() = vertices[iv1 + 1];
-		b.z() = vertices[iv1 + 2];
+		b.x = vertices[iv1];
+		b.y = vertices[iv1 + 1];
+		b.z = vertices[iv1 + 2];
 		return true;
 	}
 
-	Index2i GetEdgeT(int eID) const {
+	Vector2i GetEdgeT(int eID) const {
 		debug_check_is_edge(eID);
 		int i = 4 * eID;
-		return Index2i(edges[i + 2], edges[i + 3]);
+		return Vector2i(edges[i + 2], edges[i + 3]);
 	}
 
 	/// <summary>
-	/// return [v0,v1,t0,t1], or Index4i.Max if eid is invalid
+	/// return [v0,v1,t0,t1], or Color.Max if eid is invalid
 	/// </summary>
-	Index4i GetEdge(int eID) const {
+	Color GetEdge(int eID) const {
 		debug_check_is_edge(eID);
 		int i = 4 * eID;
-		return Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
+		return Color(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
 	}
 
 	bool GetEdge(int eID, int &a, int &b, int &t0, int &t1) const {
@@ -1104,15 +1133,15 @@ public:
 	}
 
 	// return same indices as GetEdgeV, but oriented based on attached triangle
-	Index2i GetOrientedBoundaryEdgeV(int eID) const {
+	Vector2i GetOrientedBoundaryEdgeV(int eID) const {
 		if (edges_refcount.isValid(eID)) {
 			int ei = 4 * eID;
 			if (edges[ei + 3] == InvalidID) {
 				int a = edges[ei], b = edges[ei + 1];
 				int ti = 3 * edges[ei + 2];
-				Index3i tri = Index3i(triangles[ti], triangles[ti + 1], triangles[ti + 2]);
+				Vector3i tri = Vector3i(triangles[ti], triangles[ti + 1], triangles[ti + 2]);
 				int ai = find_edge_index_in_tri(a, b, tri);
-				return Index2i(tri[ai], tri[(ai + 1) % 3]);
+				return Vector2i(tri[ai], tri[(ai + 1) % 3]);
 			}
 		}
 		gDevAssert(false);
@@ -1120,10 +1149,10 @@ public:
 	}
 
 	// average of 1 or 2 face normals
-	Vector3d GetEdgeNormal(int eID) const {
+	Vector3 GetEdgeNormal(int eID) const {
 		if (edges_refcount.isValid(eID)) {
 			int ei = 4 * eID;
-			Vector3d n = GetTriNormal(edges[ei + 2]);
+			Vector3 n = GetTriNormal(edges[ei + 2]);
 			if (edges[ei + 3] != InvalidID) {
 				n += GetTriNormal(edges[ei + 3]);
 				n.normalize();
@@ -1131,22 +1160,22 @@ public:
 			return n;
 		}
 		gDevAssert(false);
-		return Vector3d::Zero();
+		return Vector3();
 	}
 
-	Vector3d GetEdgePoint(int eID, double t) const {
+	Vector3 GetEdgePoint(int eID, double t) const {
 		if (edges_refcount.isValid(eID)) {
 			int ei = 4 * eID;
 			int iv0 = 3 * edges[ei];
 			int iv1 = 3 * edges[ei + 1];
 			double mt = 1.0 - t;
-			return Vector3d(
+			return Vector3(
 					mt * vertices[iv0] + t * vertices[iv1],
 					mt * vertices[iv0 + 1] + t * vertices[iv1 + 1],
 					mt * vertices[iv0 + 2] + t * vertices[iv1 + 2]);
 		}
 		gDevAssert(false);
-		return Vector3d::Zero();
+		return Vector3();
 	}
 
 	// mesh-building
@@ -1154,7 +1183,7 @@ public:
 	/// <summary>
 	/// Append vertex at position, returns vid
 	/// </summary>
-	int AppendVertex(const Vector3d &v) {
+	int AppendVertex(const Vector3 &v) {
 		NewVertexInfo vinfo(v);
 		return AppendVertex(vinfo);
 	}
@@ -1170,21 +1199,21 @@ public:
 		vertices.insertAt(info.v[0], i);
 
 		if (info.bHaveN) {
-			Vector3f n = (info.bHaveN) ? info.n : Vector3f::UnitY();
+			Vector3 n = (info.bHaveN) ? info.n : Vector3(0.0f, 1.0f, 0.0f);
 			normals.insertAt(n[2], i + 2);
 			normals.insertAt(n[1], i + 1);
 			normals.insertAt(n[0], i);
 		}
 
 		if (info.bHaveC) {
-			Vector3f c = (info.bHaveC) ? info.c : Vector3f::Ones();
+			Vector3 c = (info.bHaveC) ? info.c : Vector3(1.0f, 1.0f, 1.0f);
 			colors.insertAt(c[2], i + 2);
 			colors.insertAt(c[1], i + 1);
 			colors.insertAt(c[0], i);
 		}
 
 		if (info.bHaveUV) {
-			Vector2f u = (info.bHaveUV) ? info.uv : Vector2f::Zero();
+			Vector2 u = (info.bHaveUV) ? info.uv : Vector2();
 			int j = 2 * vid;
 			uv.insertAt(u[1], j + 1);
 			uv.insertAt(u[0], j);
@@ -1269,21 +1298,21 @@ public:
 		vertices.insertAt(info.v[0], i);
 
 		if (HasVertexNormals()) {
-			Vector3f n = (info.bHaveN) ? info.n : Vector3f::UnitY();
+			Vector3 n = (info.bHaveN) ? info.n : Vector3(0.0f, 1.0f, 0.0f);
 			normals.insertAt(n[2], i + 2);
 			normals.insertAt(n[1], i + 1);
 			normals.insertAt(n[0], i);
 		}
 
 		if (HasVertexColors()) {
-			Vector3f c = (info.bHaveC) ? info.c : Vector3f::Ones();
+			Vector3 c = (info.bHaveC) ? info.c : Vector3(1.0f, 1.0f, 1.0f);
 			colors.insertAt(c[2], i + 2);
 			colors.insertAt(c[1], i + 1);
 			colors.insertAt(c[0], i);
 		}
 
 		if (HasVertexUVs()) {
-			Vector2f u = (info.bHaveUV) ? info.uv : Vector2f::Zero();
+			Vector2 u = (info.bHaveUV) ? info.uv : Vector2();
 			int j = 2 * vid;
 			uv.insertAt(u[1], j + 1);
 			uv.insertAt(u[0], j);
@@ -1303,9 +1332,9 @@ public:
 	}
 
 	int AppendTriangle(int v0, int v1, int v2, int gid = -1) {
-		return AppendTriangle(Index3i(v0, v1, v2), gid);
+		return AppendTriangle(Vector3i(v0, v1, v2), gid);
 	}
-	int AppendTriangle(Index3i tv, int gid = -1) {
+	int AppendTriangle(Vector3i tv, int gid = -1) {
 		if (IsVertex(tv[0]) == false || IsVertex(tv[1]) == false || IsVertex(tv[2]) == false) {
 			gDevAssert(false);
 			return InvalidID;
@@ -1361,7 +1390,7 @@ public:
 	/// If bUnsafe, we use fast id allocation that does not update free list.
 	/// You should only be using this between BeginUnsafeTrianglesInsert() / EndUnsafeTrianglesInsert() calls
 	/// </summary>
-	MeshResult InsertTriangle(int tid, Index3i tv, int gid = -1, bool bUnsafe = false) {
+	MeshResult InsertTriangle(int tid, Vector3i tv, int gid = -1, bool bUnsafe = false) {
 		if (triangles_refcount.isValid(tid))
 			return MeshResult::Failed_TriangleAlreadyExists;
 
@@ -1418,7 +1447,7 @@ public:
 		triangles_refcount.rebuild_free_list();
 	}
 
-	void EnableVertexNormals(Vector3f initial_normal) {
+	void EnableVertexNormals(Vector3 initial_normal) {
 		if (HasVertexNormals())
 			return;
 		normals = dvector<float>();
@@ -1426,16 +1455,16 @@ public:
 		normals.resize(3 * NV);
 		for (int i = 0; i < NV; ++i) {
 			int vi = 3 * i;
-			normals[vi] = initial_normal.x();
-			normals[vi + 1] = initial_normal.y();
-			normals[vi + 2] = initial_normal.z();
+			normals[vi] = initial_normal.x;
+			normals[vi + 1] = initial_normal.y;
+			normals[vi + 2] = initial_normal.z;
 		}
 	}
 	void DiscardVertexNormals() {
 		normals = dvector<float>();
 	}
 
-	void EnableVertexColors(Vector3f initial_color) {
+	void EnableVertexColors(Vector3 initial_color) {
 		if (HasVertexColors())
 			return;
 		colors = dvector<float>();
@@ -1443,16 +1472,16 @@ public:
 		colors.resize(3 * NV);
 		for (int i = 0; i < NV; ++i) {
 			int vi = 3 * i;
-			colors[vi] = initial_color.x();
-			colors[vi + 1] = initial_color.y();
-			colors[vi + 2] = initial_color.z();
+			colors[vi] = initial_color.x;
+			colors[vi + 1] = initial_color.y;
+			colors[vi + 2] = initial_color.z;
 		}
 	}
 	void DiscardVertexColors() {
 		colors = dvector<float>();
 	}
 
-	void EnableVertexUVs(Vector2f initial_uv) {
+	void EnableVertexUVs(Vector2 initial_uv) {
 		if (HasVertexUVs())
 			return;
 		uv = dvector<float>();
@@ -1460,8 +1489,8 @@ public:
 		uv.resize(2 * NV);
 		for (int i = 0; i < NV; ++i) {
 			int vi = 2 * i;
-			uv[vi] = initial_uv.x();
-			uv[vi + 1] = initial_uv.y();
+			uv[vi] = initial_uv.x;
+			uv[vi + 1] = initial_uv.y;
 		}
 	}
 	void DiscardVertexUVs() {
@@ -1496,26 +1525,26 @@ public:
 	using value_iteration = refcount_vector::mapped_enumerable<T>;
 
 	/// <summary> Enumerate vertices </summary>
-	value_iteration<Vector3d> Vertices() {
-		return vertices_refcount.mapped_indices<Vector3d>([=](int vid) {
+	value_iteration<Vector3> Vertices() {
+		return vertices_refcount.mapped_indices<Vector3>([=](int vid) {
 			int i = 3 * vid;
-			return Vector3d(vertices[i], vertices[i + 1], vertices[i + 2]);
+			return Vector3(vertices[i], vertices[i + 1], vertices[i + 2]);
 		});
 	}
 
 	/// <summary> Enumerate triangles </summary>
-	value_iteration<Index3i> Triangles() {
-		return triangles_refcount.mapped_indices<Index3i>([=](int tid) {
+	value_iteration<Vector3i> Triangles() {
+		return triangles_refcount.mapped_indices<Vector3i>([=](int tid) {
 			int i = 3 * tid;
-			return Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
+			return Vector3i(triangles[i], triangles[i + 1], triangles[i + 2]);
 		});
 	}
 
 	/// <summary> Enumerate edges. return value is [v0,v1,t0,t1], where t1 will be InvalidID if this is a boundary edge </summary>
-	value_iteration<Index4i> Edges() {
-		return edges_refcount.mapped_indices<Index4i>([=](int eid) {
+	value_iteration<Color> Edges() {
+		return edges_refcount.mapped_indices<Color>([=](int eid) {
 			int i = 4 * eid;
-			return Index4i(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
+			return Color(edges[i], edges[i + 1], edges[i + 2], edges[i + 3]);
 		});
 	}
 
@@ -1542,7 +1571,7 @@ public:
 	/// If edge has vertices [a,b], and is connected two triangles [a,b,c] and [a,b,d],
 	/// this returns [c,d], or [c,InvalidID] for a boundary edge
 	/// </summary>
-	Index2i GetEdgeOpposingV(int eID) const {
+	Vector2i GetEdgeOpposingV(int eID) const {
 		// [TODO] there was a comment here saying this does more work than necessary??
 		// ** it is important that verts returned maintain [c,d] order!!
 		int i = 4 * eID;
@@ -1551,9 +1580,9 @@ public:
 		int c = find_tri_other_vtx(a, b, triangles, t0);
 		if (t1 != InvalidID) {
 			int d = find_tri_other_vtx(a, b, triangles, t1);
-			return Index2i(c, d);
+			return Vector2i(c, d);
 		} else
-			return Index2i(c, InvalidID);
+			return Vector2i(c, InvalidID);
 	}
 
 	/// <summary>
@@ -1751,22 +1780,22 @@ public:
 	/// Fastest possible one-ring centroid. This is used inside many other algorithms
 	/// so it helps to have it be maximally efficient
 	/// </summary>
-	void VtxOneRingCentroid(int vID, Vector3d &centroid) const {
-		centroid = Vector3d::Zero();
+	void VtxOneRingCentroid(int vID, Vector3 &centroid) const {
+		centroid = Vector3();
 		if (vertices_refcount.isValid(vID)) {
 			int n = 0;
 			for (int eid : vertex_edges.values(vID)) {
 				int other_idx = 3 * edge_other_v(eid, vID);
-				centroid.x() += vertices[other_idx];
-				centroid.y() += vertices[other_idx + 1];
-				centroid.z() += vertices[other_idx + 2];
+				centroid.x += vertices[other_idx];
+				centroid.y += vertices[other_idx + 1];
+				centroid.z += vertices[other_idx + 2];
 				n++;
 			}
 			if (n > 0) {
 				double d = 1.0 / n;
-				centroid.x() = centroid.x() * d; 
-				centroid.y() = centroid.y() * d; 
-				centroid.z() = centroid.z() * d; 
+				centroid.x = centroid.x * d;
+				centroid.y = centroid.y * d;
+				centroid.z = centroid.z * d;
 			}
 		}
 	}
@@ -1950,9 +1979,9 @@ public:
 		gDevAssert(IsVertex(vID));
 		gDevAssert(HasTriangleGroups());
 
-		Index2i groups(InvalidGroupID, InvalidGroupID);
+		Vector2i groups(InvalidGroupID, InvalidGroupID);
 		for (int eID : vertex_edges.values(vID)) {
-			Index2i et = Index2i(edges[4 * eID + 2], edges[4 * eID + 3]);
+			Vector2i et = Vector2i(edges[4 * eID + 2], edges[4 * eID + 3]);
 			for (int k = 0; k < 2; ++k) {
 				if (et[k] == InvalidID)
 					continue;
@@ -1973,24 +2002,26 @@ public:
 	/// <summary>
 	/// returns up to 4 group IDs at vertex. Returns false if > 4 encountered
 	/// </summary>
-	bool GetVertexGroups(int vID, Index4i &groups) const {
+	bool GetVertexGroups(int vID, Color &groups) const {
 		gDevAssert(IsVertex(vID));
 		gDevAssert(HasTriangleGroups());
 
-		groups = Index4i(InvalidGroupID, InvalidGroupID, InvalidGroupID, InvalidGroupID);
+		groups = Color(InvalidGroupID, InvalidGroupID, InvalidGroupID, InvalidGroupID);
 		int ng = 0;
 
 		for (int eID : vertex_edges.values(vID)) {
 			int et0 = edges[4 * eID + 2];
 			int g0 = triangle_groups[et0];
-			if (Contains(groups, g0) == false)
+			if ((int32_t)Math::round(groups.r) != g0 && (int32_t)Math::round(groups.g) != g0 &&
+					(int32_t)Math::round(groups.b) != g0 && (int32_t)Math::round(groups.a) != g0)
 				groups[ng++] = g0;
 			if (ng == 4)
 				return false;
 			int et1 = edges[4 * eID + 3];
 			if (et1 != InvalidID) {
 				int g1 = triangle_groups[et1];
-				if (Contains(groups, g1) == false)
+				if ((int32_t)Math::round(groups.r) != g1 && (int32_t)Math::round(groups.g) != g1 &&
+						(int32_t)Math::round(groups.b) != g1 && (int32_t)Math::round(groups.a) != g1)
 					groups[ng++] = g1;
 				if (ng == 4)
 					return false;
@@ -2060,14 +2091,14 @@ public:
 		int count = 1;
 		while (true) {
 			int i = 3 * prev_tid;
-			Index3i tv = Index3i(triangles[i], triangles[i + 1], triangles[i + 2]);
-			Index3i te = Index3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
+			Vector3i tv = Vector3i(triangles[i], triangles[i + 1], triangles[i + 2]);
+			Vector3i te = Vector3i(triangle_edges[i], triangle_edges[i + 1], triangle_edges[i + 2]);
 			int vert_idx = find_tri_index(vID, tv);
 			int e1 = te[vert_idx], e2 = te[(vert_idx + 2) % 3];
 			int next_eid = (e1 == prev_eid) ? e2 : e1;
 			if (next_eid == start_eid)
 				break;
-			Index2i next_eid_tris = GetEdgeT(next_eid);
+			Vector2i next_eid_tris = GetEdgeT(next_eid);
 			int next_tid = (next_eid_tris[0] == prev_tid) ? next_eid_tris[1] : next_eid_tris[0];
 			if (next_tid == InvalidID) {
 				break;
@@ -2086,7 +2117,7 @@ public:
 	/// <summary>
 	/// Computes bounding box of all vertices.
 	/// </summary>
-	AxisAlignedBox3d GetBounds() const {
+	AABB GetBounds() const {
 		double x = 0, y = 0, z = 0;
 		for (int vi : VertexIndices()) {
 			x = vertices[3 * vi];
@@ -2112,16 +2143,16 @@ public:
 			else if (z > maxz)
 				maxz = z;
 		}
-		return AxisAlignedBox3d(Wml::Vector3d(minx, miny, minz), Wml::Vector3d(maxx, maxy, maxz));
+		return AABB(Vector3(minx, miny, minz), Vector3(maxx, maxy, maxz));
 	}
 
-	AxisAlignedBox3d cached_bounds;
+	AABB cached_bounds;
 	int cached_bounds_timestamp = -1;
 
 	/// <summary>
 	/// cached bounding box, lazily re-computed on access if mesh has changed
 	/// </summary>
-	AxisAlignedBox3d CachedBounds() {
+	AABB CachedBounds() {
 		if (cached_bounds_timestamp != Timestamp()) {
 			cached_bounds = GetBounds();
 			cached_bounds_timestamp = Timestamp();
@@ -2183,11 +2214,11 @@ public:
 	/// returns ~0 for points outside a closed, consistently oriented mesh, and a positive or negative integer
 	/// for points inside, with value > 1 depending on how many "times" the point inside the mesh (like in 2D polygon winding)
 	/// </summary>
-	double WindingNumber(Vector3d v) const {
+	double WindingNumber(Vector3 v) const {
 		double sum = 0;
 		for (int tid : TriangleIndices())
 			sum += GetTriSolidAngle(tid, v);
-		return sum / (4.0 * Math<double>::PI);
+		return sum / (4.0 * Math_PI);
 	}
 
 	// Metadata support
@@ -2298,13 +2329,13 @@ public:
 				vertices_refcount.set_Unsafe(vb, 1);
 			}
 			triangles_refcount.set_Unsafe(t0, 1);
-			Index3i tri0 = GetTriangle(t0);
+			Vector3i tri0 = GetTriangle(t0);
 			int idx0 = find_edge_index_in_tri(va, vb, tri0);
 			triangle_edges[3 * t0 + idx0] = eid;
 
 			if (t1 != InvalidID) {
 				triangles_refcount.set_Unsafe(t1, 1);
-				Index3i tri1 = GetTriangle(t1);
+				Vector3i tri1 = GetTriangle(t1);
 				int idx1 = find_edge_index_in_tri(va, vb, tri1);
 				triangle_edges[3 * t1 + idx1] = eid;
 			}
@@ -2534,9 +2565,9 @@ public:
 		return MeshResult::Ok;
 	}
 	void internal_reverse_tri_orientation(int tID) {
-		Index3i t = GetTriangle(tID);
+		Vector3i t = GetTriangle(tID);
 		set_triangle(tID, t[1], t[0], t[2]);
-		Index3i te = GetTriEdges(tID);
+		Vector3i te = GetTriEdges(tID);
 		set_triangle_edges(tID, te[0], te[2], te[1]);
 	}
 
@@ -2569,7 +2600,7 @@ public:
 			// interior edge then we will create a bowtie if we remove that triangle
 			if (bPreserveManifold) {
 				for (int tid : VtxTrianglesItr(vID)) {
-					Index3i tri = GetTriangle(tid);
+					Vector3i tri = GetTriangle(tid);
 					int j = find_tri_index(vID, tri);
 					int oa = tri[(j + 1) % 3], ob = tri[(j + 2) % 3];
 					int eid = find_edge(oa, ob);
@@ -2614,8 +2645,8 @@ public:
 			return MeshResult::Failed_NotATriangle;
 		}
 
-		Index3i tv = GetTriangle(tID);
-		Index3i te = GetTriEdges(tID);
+		Vector3i tv = GetTriangle(tID);
+		Vector3i te = GetTriEdges(tID);
 
 		// if any tri vtx is a boundary vtx connected to two interior edges, then
 		// we cannot remove this triangle because it would create a bowtie vertex!
@@ -2665,9 +2696,9 @@ public:
 		return MeshResult::Ok;
 	}
 
-	virtual MeshResult SetTriangle(int tID, Index3i newv, bool bRemoveIsolatedVertices = true) {
-		Index3i tv = GetTriangle(tID);
-		Index3i te = GetTriEdges(tID);
+	virtual MeshResult SetTriangle(int tID, Vector3i newv, bool bRemoveIsolatedVertices = true) {
+		Vector3i tv = GetTriangle(tID);
+		Vector3i te = GetTriEdges(tID);
 		if (tv[0] == newv[0] && tv[1] == newv[1])
 			te[0] = -1;
 		if (tv[1] == newv[1] && tv[2] == newv[2])
@@ -2781,7 +2812,7 @@ public:
 		int t0 = edges[eab_i + 2];
 		if (t0 == InvalidID)
 			return MeshResult::Failed_BrokenTopology;
-		Index3i T0tv = GetTriangle(t0);
+		Vector3i T0tv = GetTriangle(t0);
 		int c = orient_tri_edge_and_find_other_vtx(a, b, T0tv);
 		if (vertices_refcount.rawRefCount(c) > 32764)
 			return MeshResult::Failed_HitValenceLimit;
@@ -2792,17 +2823,17 @@ public:
 		//  is too hard to follow later if we factor it out...
 		if (IsBoundaryEdge(eab)) {
 			// create vertex
-			Vector3d vNew = Lerp(GetVertex(a), GetVertex(b), split_t);
+			Vector3 vNew = GetVertex(a).lerp(GetVertex(b), split_t);
 			int f = AppendVertex(vNew);
 			if (HasVertexNormals())
-				SetVertexNormal(f, Lerp(GetVertexNormal(a), GetVertexNormal(b), (float)split_t).normalized());
+				SetVertexNormal(f, GetVertexNormal(a).lerp(GetVertexNormal(b), (float)split_t).normalized());
 			if (HasVertexColors())
-				SetVertexColor(f, Lerp(GetVertexColor(a), GetVertexColor(b), (float)split_t));
+				SetVertexColor(f, GetVertexColor(a).lerp(GetVertexColor(b), (float)split_t));
 			if (HasVertexUVs())
-				SetVertexUV(f, Lerp(GetVertexUV(a), GetVertexUV(b), (float)split_t));
+				SetVertexUV(f, GetVertexUV(a).lerp(GetVertexUV(b), (float)split_t));
 
 			// look up edge bc, which needs to be modified
-			Index3i T0te = GetTriEdges(t0);
+			Vector3i T0te = GetTriEdges(t0);
 			int ebc = T0te[find_edge_index_in_tri(b, c, T0tv)];
 
 			// rewrite existing triangle
@@ -2847,26 +2878,26 @@ public:
 
 			// look up other triangle
 			int t1 = edges[eab_i + 3];
-			Index3i T1tv = GetTriangle(t1);
+			Vector3i T1tv = GetTriangle(t1);
 			int d = find_tri_other_vtx(a, b, T1tv);
 			if (vertices_refcount.rawRefCount(d) > 32764)
 				return MeshResult::Failed_HitValenceLimit;
 
 			// create vertex
-			Vector3d vNew = Lerp(GetVertex(a), GetVertex(b), split_t);
+			Vector3 vNew = GetVertex(a).lerp(GetVertex(b), split_t);
 			int f = AppendVertex(vNew);
 			if (HasVertexNormals())
-				SetVertexNormal(f, Lerp(GetVertexNormal(a), GetVertexNormal(b), (float)split_t).normalized());
+				SetVertexNormal(f, GetVertexNormal(a).lerp(GetVertexNormal(b), (float)split_t).normalized());
 			if (HasVertexColors())
-				SetVertexColor(f, Lerp(GetVertexColor(a), GetVertexColor(b), (float)split_t));
+				SetVertexColor(f, GetVertexColor(a).lerp(GetVertexColor(b), (float)split_t));
 			if (HasVertexUVs())
-				SetVertexUV(f, Lerp(GetVertexUV(a), GetVertexUV(b), (float)split_t));
+				SetVertexUV(f, GetVertexUV(a).lerp(GetVertexUV(b), (float)split_t));
 
 			// look up edges that we are going to need to update
 			// [TODO OPT] could use ordering to reduce # of compares here
-			Index3i T0te = GetTriEdges(t0);
+			Vector3i T0te = GetTriEdges(t0);
 			int ebc = T0te[find_edge_index_in_tri(b, c, T0tv)];
-			Index3i T1te = GetTriEdges(t1);
+			Vector3i T1te = GetTriEdges(t1);
 			int edb = T1te[find_edge_index_in_tri(d, b, T1tv)];
 
 			// rewrite existing triangles
@@ -2947,7 +2978,7 @@ public:
 		int eab_i = 4 * eab;
 		int a = edges[eab_i], b = edges[eab_i + 1];
 		int t0 = edges[eab_i + 2], t1 = edges[eab_i + 3];
-		Index3i T0tv = GetTriangle(t0), T1tv = GetTriangle(t1);
+		Vector3i T0tv = GetTriangle(t0), T1tv = GetTriangle(t1);
 		int c = orient_tri_edge_and_find_other_vtx(a, b, T0tv);
 		int d = find_tri_other_vtx(a, b, T1tv);
 		if (c == InvalidID || d == InvalidID) {
@@ -3021,12 +3052,12 @@ public:
 	}
 
 	void check_tri(int t) {
-		Index3i tv = GetTriangle(t);
+		Vector3i tv = GetTriangle(t);
 		if (tv[0] == tv[1] || tv[0] == tv[2] || tv[1] == tv[2])
 			gDevAssert(false);
 	}
 	void check_edge(int e) {
-		Index2i tv = GetEdgeT(e);
+		Vector2i tv = GetEdgeT(e);
 		if (tv[0] == -1)
 			gDevAssert(false);
 	}
@@ -3057,7 +3088,7 @@ public:
 		int t0 = edges[4 * eab + 2];
 		if (t0 == InvalidID)
 			return MeshResult::Failed_BrokenTopology;
-		Index3i T0tv = GetTriangle(t0);
+		Vector3i T0tv = GetTriangle(t0);
 		int c = find_tri_other_vtx(a, b, T0tv);
 
 		// look up opposing triangle/vtx if we are not in boundary case
@@ -3065,7 +3096,7 @@ public:
 		int d = InvalidID;
 		int t1 = edges[4 * eab + 3];
 		if (t1 != InvalidID) {
-			Index3i T1tv = GetTriangle(t1);
+			Vector3i T1tv = GetTriangle(t1);
 			d = find_tri_other_vtx(a, b, T1tv);
 			if (c == d)
 				return MeshResult::Failed_FoundDuplicateTriangle;
@@ -3279,8 +3310,8 @@ public:
 		if (IsEdge(eKeep) == false || IsEdge(eDiscard) == false)
 			return MeshResult::Failed_NotAnEdge;
 
-		Index4i edgeinfo_keep = GetEdge(eKeep);
-		Index4i edgeinfo_discard = GetEdge(eDiscard);
+		Color edgeinfo_keep = GetEdge(eKeep);
+		Color edgeinfo_discard = GetEdge(eDiscard);
 		if (edgeinfo_keep[3] != InvalidID || edgeinfo_discard[3] != InvalidID)
 			return MeshResult::Failed_NotABoundaryEdge;
 
@@ -3301,16 +3332,16 @@ public:
 		int x = c;
 		c = d;
 		d = x; // joinable bdry edges have opposing orientations, so flip to get ac and b/d correspondences
-		Vector3d Va = GetVertex(a), Vb = GetVertex(b), Vc = GetVertex(c), Vd = GetVertex(d);
-		if (((Va - Vc).squaredNorm() + (Vb - Vd).squaredNorm()) >
-				((Va - Vd).squaredNorm() + (Vb - Vc).squaredNorm()))
+		Vector3 Va = GetVertex(a), Vb = GetVertex(b), Vc = GetVertex(c), Vd = GetVertex(d);
+		if (((Va - Vc).length_squared() + (Vb - Vd).length_squared()) >
+				((Va - Vd).length_squared() + (Vb - Vc).length_squared()))
 			return MeshResult::Failed_SameOrientation;
 
 		// alternative that detects normal flip of triangle tcd. This is a more
 		// robust geometric test, but fails if tri is degenerate...also more expensive
-		//Vector3d otherv = GetVertex(tcd_otherv);
-		//Vector3d Ncd = MathUtil.FastNormalDirection(GetVertex(c), GetVertex(d), otherv);
-		//Vector3d Nab = MathUtil.FastNormalDirection(GetVertex(a), GetVertex(b), otherv);
+		//Vector3 otherv = GetVertex(tcd_otherv);
+		//Vector3 Ncd = MathUtil.FastNormalDirection(GetVertex(c), GetVertex(d), otherv);
+		//Vector3 Nab = MathUtil.FastNormalDirection(GetVertex(a), GetVertex(b), otherv);
 		//if (Ncd.Dot(Nab) < 0)
 		//return MeshResult::Failed_SameOrientation;
 
@@ -3472,19 +3503,19 @@ public:
 	struct PokeTriangleInfo {
 		int new_vid;
 		int new_t1, new_t2;
-		Index3i new_edges;
+		Vector3i new_edges;
 	};
 	virtual MeshResult PokeTriangle(int tid, PokeTriangleInfo &result) {
-		return PokeTriangle(tid, Vector3d::Ones() / 3.0, result);
+		return PokeTriangle(tid, Vector3(1.0f, 1.0f, 1.0f) / 3.0, result);
 	}
-	virtual MeshResult PokeTriangle(int tid, const Vector3d &baryCoordinates, PokeTriangleInfo &result) {
+	virtual MeshResult PokeTriangle(int tid, const Vector3 &baryCoordinates, PokeTriangleInfo &result) {
 		result = PokeTriangleInfo();
 
 		if (!IsTriangle(tid))
 			return MeshResult::Failed_NotATriangle;
 
-		Index3i tv = GetTriangle(tid);
-		Index3i te = GetTriEdges(tid);
+		Vector3i tv = GetTriangle(tid);
+		Vector3i te = GetTriEdges(tid);
 
 		// create vertex with interpolated vertex attribs
 		NewVertexInfo vinfo;
@@ -3527,7 +3558,7 @@ public:
 		result.new_vid = center;
 		result.new_t1 = t1;
 		result.new_t2 = t2;
-		result.new_edges = Index3i(eaC, ebC, ecC);
+		result.new_edges = Vector3i(eaC, ebC, ecC);
 
 		updateTimeStamp(true);
 		return MeshResult::Ok;
@@ -3575,13 +3606,13 @@ public:
 	bool IsSameMesh(const DMesh3 &m2, bool bCheckConnectivity, bool bCheckEdgeIDs = false,
 			bool bCheckNormals = false, bool bCheckColors = false, bool bCheckUVs = false,
 			bool bCheckGroups = false,
-			float Epsilon = Wml::Mathf::EPSILON) {
+			float Epsilon = CMP_EPSILON) {
 		if (VertexCount() != m2.VertexCount())
 			return false;
 		if (TriangleCount() != m2.TriangleCount())
 			return false;
 		for (int vid : VertexIndices()) {
-			if (m2.IsVertex(vid) == false || EpsilonEqual(GetVertex(vid), m2.GetVertex(vid), Epsilon) == false)
+			if (m2.IsVertex(vid) == false || GetVertex(vid).is_approx_equal(m2.GetVertex(vid)) == false)
 				return false;
 		}
 		for (int tid : TriangleIndices()) {
@@ -3590,11 +3621,11 @@ public:
 		}
 		if (bCheckConnectivity) {
 			for (int eid : EdgeIndices()) {
-				Index4i e = GetEdge(eid);
+				Color e = GetEdge(eid);
 				int other_eid = m2.FindEdge(e[0], e[1]);
 				if (other_eid == InvalidID)
 					return false;
-				Index4i oe = m2.GetEdge(other_eid);
+				Color oe = m2.GetEdge(other_eid);
 				if (std::min(e[2], e[3]) != std::min(oe[2], oe[3]) || std::max(e[2], e[3]) != std::max(oe[2], oe[3]))
 					return false;
 			}
@@ -3612,7 +3643,7 @@ public:
 				return false;
 			if (HasVertexNormals()) {
 				for (int vid : VertexIndices()) {
-					if (EpsilonEqual(GetVertexNormal(vid), m2.GetVertexNormal(vid), Epsilon) == false)
+					if (Math::is_equal_approx(GetVertexNormal(vid), m2.GetVertexNormal(vid)) == false)
 						return false;
 				}
 			}
@@ -3622,8 +3653,9 @@ public:
 				return false;
 			if (HasVertexColors()) {
 				for (int vid : VertexIndices()) {
-					if (EpsilonEqual(GetVertexColor(vid), m2.GetVertexColor(vid), Epsilon) == false)
+					if (GetVertexColor(vid).is_equal_approx(m2.GetVertexColor(vid)) == false) {
 						return false;
+					}
 				}
 			}
 		}
@@ -3632,8 +3664,9 @@ public:
 				return false;
 			if (HasVertexUVs()) {
 				for (int vid : VertexIndices()) {
-					if (EpsilonEqual(GetVertexUV(vid), m2.GetVertexUV(vid), Epsilon) == false)
+					if (GetVertexUV(vid).is_equal_approx(m2.GetVertexUV(vid)) == false) {
 						return false;
+					}
 				}
 			}
 		}
@@ -3669,7 +3702,7 @@ public:
 		};
 		if (eFailMode == FailMode::DevAssert) {
 			CheckOrFailF = [&](bool b) {
-				gDevAssert(b);
+				// gDevAssert(b);
 				is_ok = is_ok && b;
 			};
 		} else if (eFailMode == FailMode::Throw) {
@@ -3694,14 +3727,14 @@ public:
 			CheckOrFailF(triangles_refcount.refCount(tID) == 1);
 
 			// vertices must exist
-			Index3i tv = GetTriangle(tID);
+			Vector3i tv = GetTriangle(tID);
 			for (int j = 0; j < 3; ++j) {
 				CheckOrFailF(IsVertex(tv[j]));
 				triToVtxRefs[tv[j]] += 1;
 			}
 
 			// edges must exist and reference this tri
-			Index3i e;
+			Vector3i e;
 			for (int j = 0; j < 3; ++j) {
 				int a = tv[j], b = tv[(j + 1) % 3];
 				e[j] = FindEdge(a, b);
@@ -3712,7 +3745,7 @@ public:
 			CheckOrFailF(e[0] != e[1] && e[0] != e[2] && e[1] != e[2]);
 
 			// tri nbrs must exist and reference this tri, or same edge must be boundary edge
-			Index3i te = GetTriEdges(tID);
+			Vector3i te = GetTriEdges(tID);
 			for (int j = 0; j < 3; ++j) {
 				int eid = te[j];
 				CheckOrFailF(IsEdge(eid));
@@ -3726,11 +3759,11 @@ public:
 
 				// edge must have same two verts as tri for same index
 				int a = tv[j], b = tv[(j + 1) % 3];
-				Index2i ev = GetEdgeV(te[j]);
+				Vector2i ev = GetEdgeV(te[j]);
 				CheckOrFailF(same_pair_unordered(a, b, ev[0], ev[1]));
 
 				// also check that nbr edge has opposite orientation
-				Index3i othertv = GetTriangle(tOther);
+				Vector3i othertv = GetTriangle(tOther);
 				int found = find_tri_ordered_edge(b, a, othertv);
 				CheckOrFailF(found != InvalidID);
 			}
@@ -3740,8 +3773,8 @@ public:
 		for (int eID : EdgeIndices()) {
 			CheckOrFailF(IsEdge(eID));
 			CheckOrFailF(edges_refcount.refCount(eID) == 1);
-			Index2i ev = GetEdgeV(eID);
-			Index2i et = GetEdgeT(eID);
+			Vector2i ev = GetEdgeV(eID);
+			Vector2i et = GetEdgeT(eID);
 			CheckOrFailF(IsVertex(ev[0]));
 			CheckOrFailF(IsVertex(ev[1]));
 			CheckOrFailF(et[0] != InvalidID);
@@ -3764,9 +3797,9 @@ public:
 		for (int vID : VertexIndices()) {
 			CheckOrFailF(IsVertex(vID));
 
-			Vector3d v = GetVertex(vID);
-			CheckOrFailF(isnan(v.squaredNorm()) == false);
-			CheckOrFailF(isfinite(v.squaredNorm()));
+			Vector3 v = GetVertex(vID);
+			CheckOrFailF(isnan(v.length_squared()) == false);
+			CheckOrFailF(isfinite(v.length_squared()));
 
 			for (int edgeid : vertex_edges.values(vID)) {
 				CheckOrFailF(IsEdge(edgeid));
@@ -3805,7 +3838,7 @@ public:
 			// check that edges around vert only references tris above, and reference all of them!
 			std::vector<int> vRemoveTris(vTris);
 			for (int edgeid : vertex_edges.values(vID)) {
-				Index2i edget = GetEdgeT(edgeid);
+				Vector2i edget = GetEdgeT(edgeid);
 				CheckOrFailF(Contains(vTris, edget[0]));
 				if (edget[1] != InvalidID)
 					CheckOrFailF(Contains(vTris, edget[1]));

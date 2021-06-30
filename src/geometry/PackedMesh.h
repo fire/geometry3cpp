@@ -109,8 +109,8 @@ public:
 
 	void GetTriangle(unsigned int k, unsigned int &i0, unsigned int &i1, unsigned int &i2) const;
 	void GetTriangle(unsigned int k, unsigned int *iTri) const;
-	void GetTriangle(unsigned int k, g3::Vector3f &v0, g3::Vector3f &v1, g3::Vector3f &v2) const;
-	void GetTriangle(unsigned int k, g3::Vector3f *pTri) const;
+	void GetTriangle(unsigned int k, Vector3 &v0, Vector3 &v1, Vector3 &v2) const;
+	void GetTriangle(unsigned int k, Vector3 *pTri) const;
 
 	void SetTriangle(unsigned int k, int a, int b, int c) {
 		unsigned int *t = &m_vIndices[3 * k];
@@ -119,7 +119,7 @@ public:
 		t[2] = c;
 	}
 
-	g3::Vector3f GetTriangleNormal(unsigned int k) const;
+	Vector3 GetTriangleNormal(unsigned int k) const;
 
 	void EstimateNormals();
 

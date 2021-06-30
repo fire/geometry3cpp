@@ -11,7 +11,7 @@ std::ostream &operator<<(std::ostream &os, const g3::Vector2d &v) {
 	return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const g3::Vector3f &v) {
+std::ostream &operator<<(std::ostream &os, const Vector3 &v) {
 	os << v[0] << "," << v[1] << "," << v[2];
 	return os;
 }
@@ -56,7 +56,7 @@ std::ostream &operator<<(std::ostream &os, const g3::AxisAlignedBox3f &b) {
 	   << b.Min[2] << "-" << b.Max[2];
 	return os;
 }
-std::ostream &operator<<(std::ostream &os, const g3::AxisAlignedBox3d &b) {
+std::ostream &operator<<(std::ostream &os, const g3::AABB &b) {
 	os << b.Min[0] << "-" << b.Max[0] << "," << b.Min[1] << "-" << b.Max[1] << ","
 	   << b.Min[2] << "-" << b.Max[2];
 	return os;

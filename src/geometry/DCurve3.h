@@ -1,91 +1,95 @@
 #pragma once
 
 #include "ISampledCurve3d.h"
-#include "Wm5Segment3.h"
 #include "g3types.h"
 #include <stdio.h>
 #include <list>
+
+#include "core/math/aabb.h"
+#include "core/math/vector3.h"
+#include "core/templates/list.h"
+#include "scene/resources/curve.h"
 
 namespace g3 {
 
 struct Segment3d {
 	// Center-direction-extent representation.
 	// Extent is half length of segment
-	Vector3d Center;
-	Vector3d Direction;
-	double Extent;
+	::Vector3 Center;
+	::Vector3 Direction;
+	real_t Extent;
 
-	Segment3d(Vector3d p0, Vector3d p1) {
+	Segment3d(::Vector3 p0, ::Vector3 p1) {
 		Center = 0.5 * (p0 + p1);
 		Direction = p1 - p0;
-		Extent = 0.5 * Direction.norm();
+		Extent = 0.5f * p0.distance_to(p1);
 	}
-	Segment3d(Vector3d center, Vector3d direction, double extent) {
+
+	Segment3d(::Vector3 center, ::Vector3 direction, double extent) {
 		Center = center;
 		Direction = direction;
 		Extent = extent;
 	}
 
-	void update_from_endpoints(Vector3d p0, Vector3d p1) {
+	void update_from_endpoints(::Vector3 p0, ::Vector3 p1) {
 		Center = 0.5 * (p0 + p1);
-		Direction = p1 - p0;
-		Extent = 0.5 * Direction.norm();
+		Extent = 0.5 * p0.distance_to(p1);
 	}
 
-	void SetEndpoints(Vector3d p0, Vector3d p1) {
+	void SetEndpoints(::Vector3 p0, ::Vector3 p1) {
 		update_from_endpoints(p0, p1);
 	}
-	Vector3d GetP0() {
+	::Vector3 GetP0() {
 		return Center - Extent * Direction;
 	}
-	Vector3d GetP1() {
+	::Vector3 GetP1() {
 		return Center + Extent * Direction;
 	}
 
-	void SetP0(Vector3d value) {
+	void SetP0(::Vector3 value) {
 		update_from_endpoints(value, GetP1());
 	}
-	void SetP1(Vector3d value) {
+	void SetP1(::Vector3 value) {
 		update_from_endpoints(GetP0(), value);
 	}
 	double Length() {
 		return 2 * Extent;
 	}
 
-	// parameter is signed distance from center in direction
-	Vector3d PointAt(double d) {
+	// parameter is signed distance_to from center in direction
+	::Vector3 PointAt(double d) {
 		return Center + d * Direction;
 	}
 
 	// t ranges from [0,1] over [P0,P1]
-	Vector3d PointBetween(double t) {
+	::Vector3 PointBetween(double t) {
 		return Center + (2 * t - 1) * Extent * Direction;
 	}
 
-	double DistanceSquared(Vector3d p) {
+	double DistanceSquared(::Vector3 p) {
 		double t = (p - Center).dot(Direction);
 		if (t >= Extent)
-			return (p - GetP1()).squaredNorm();
+			return GetP1().distance_squared_to(p);
 		else if (t <= -Extent)
-			return (p - GetP0()).squaredNorm();
-		Vector3d proj = Center + t * Direction;
-		return (proj - p).squaredNorm();
+			return GetP0().distance_squared_to(p);
+		::Vector3 proj = Center + t * Direction;
+		return (p).distance_squared_to(proj);
 	}
 
-	double DistanceSquared(Vector3d p, double &t) {
+	double DistanceSquared(::Vector3 p, double &t) {
 		t = (p - Center).dot(Direction);
 		if (t >= Extent) {
 			t = Extent;
-			return (p - GetP1()).squaredNorm();
+			return GetP1().distance_squared_to(p);
 		} else if (t <= -Extent) {
 			t = -Extent;
-			return (p - GetP0()).squaredNorm();
+			return GetP0().distance_squared_to(p);
 		}
-		Vector3d proj = Center + t * Direction;
-		return (proj - p).squaredNorm();
+		::Vector3 proj = Center + t * Direction;
+		return p.distance_squared_to(proj);
 	}
 
-	Vector3d NearestPoint(Vector3d p) {
+	::Vector3 NearestPoint(::Vector3 p) {
 		double t = (p - Center).dot(Direction);
 		if (t >= Extent)
 			return GetP1();
@@ -94,7 +98,7 @@ struct Segment3d {
 		return Center + t * Direction;
 	}
 
-	double Project(Vector3d p) {
+	double Project(::Vector3 p) {
 		return (p - Center).dot(Direction);
 	}
 
@@ -108,11 +112,11 @@ struct Segment3d {
 	}
 
 	// t in range[0,1] spans arc
-	Vector3d SampleT(double t) {
+	::Vector3 SampleT(double t) {
 		return Center + (2 * t - 1) * Extent * Direction;
 	}
 
-	Vector3d TangentT(double t) {
+	::Vector3 TangentT(double t) {
 		return Direction;
 	}
 
@@ -124,7 +128,7 @@ struct Segment3d {
 		return 2 * Extent;
 	}
 
-	Vector3d SampleArcLength(double a) {
+	::Vector3 SampleArcLength(double a) {
 		return GetP0() + a * Direction;
 	}
 
@@ -161,22 +165,22 @@ struct Segment3d {
 // 	}
 
 // 	Vector3f GetP0() {
-// 		 return Center - Extent * Direction; 
+// 		 return Center - Extent * Direction;
 // 	}
 // 	Vector3f GetP1() {
-// 		 return Center + Extent * Direction; 
+// 		 return Center + Extent * Direction;
 // 	}
 // 	Vector3f SetP0(Vector3f value) {
-// 		 update_from_endpoints(value, GetP1()); 
+// 		 update_from_endpoints(value, GetP1());
 // 	}
 // 	Vector3f SetP1(Vector3f value) {
-// 		 update_from_endpoints(GetP0(), value); 
+// 		 update_from_endpoints(GetP0(), value);
 // 	}
 // 	float Length() {
 // 		return 2 * Extent;
 // 	}
 
-// 	// parameter is signed distance from center in direction
+// 	// parameter is signed distance_to from center in direction
 // 	Vector3f PointAt(float d) {
 // 		return Center + d * Direction;
 // 	}
@@ -213,40 +217,39 @@ struct Segment3d {
 
 class CurveUtils {
 public:
-	static double ArcLength(std::vector<Vector3d> vertices, bool bLoop) {
+	static double ArcLength(std::vector<::Vector3> vertices, bool bLoop) {
 		double sum = 0;
 		for (int i = 1; i < vertices.size(); ++i) {
-			sum += (vertices[i - 1] - vertices[i]).norm();
+			sum += vertices[i].distance_to(vertices[i - 1]);
 		}
 		if (bLoop) {
-			sum += (vertices[0] - vertices[vertices.size() - 1]).norm();
+			sum += vertices[vertices.size() - 1].distance_to(vertices[0]);
 		}
 		return sum;
 	}
 
-	static Vector3d GetTangent(std::vector<Wm5::Vector3d> vertices, int i, bool bLoop) {
+	static ::Vector3 GetTangent(std::vector<::Vector3> vertices, int i, bool bLoop) {
 		if (bLoop) {
 			int NV = vertices.size();
 			if (i == 0) {
-				return (vertices[1] - vertices[NV - 1]).Normalized();
+				return (vertices[1] - vertices[NV - 1]).normalized();
 			} else {
-				return (vertices[(i + 1) % NV] - vertices[i - 1]).Normalized();
+				return (vertices[(i + 1) % NV] - vertices[i - 1]).normalized();
 			}
 		} else {
 			if (i == 0) {
-				return (vertices[1] - vertices[0]).Normalized();
+				return (vertices[1] - vertices[0]).normalized();
 			} else if (i == vertices.size() - 1) {
-				return (vertices[vertices.size() - 1] - vertices[vertices.size() - 2]).Normalized();
+				return (vertices[vertices.size() - 1] - vertices[vertices.size() - 2]).normalized();
 			} else {
-				return (vertices[i + 1] - vertices[i - 1]).Normalized();
+				return (vertices[i + 1] - vertices[i - 1]).normalized();
 			}
 		}
 	}
-	template<typename T> 
-	static T lerp(float t, const T& a, const T& b) {
-		return a*(1-t) + b*t;
+	template <typename T>
+	static T lerp(float t, const T &a, const T &b) {
+		return a * (1 - t) + b * t;
 	}
-
 };
 
 /// <summary>
@@ -257,14 +260,14 @@ class DCurve3 : public ISampledCurve3d {
 	// [TODO] use dvector? or double-indirection indexing?
 	//   question is how to insert efficiently...
 protected:
-	std::list<Vector3d> vertices;
+	List<Vector3> vertices;
 	bool closed = false;
 	int Timestamp;
 
 public:
 	double ArcLength() {
-		std::vector<Vector3d> vertices;
-		for (Vector3d vert : vertices) {
+		std::vector<::Vector3> vertices;
+		for (::Vector3 vert : vertices) {
 			vertices.push_back(vert);
 		}
 		return CurveUtils::ArcLength(vertices, Closed());
@@ -273,18 +276,18 @@ public:
 	/// <summary>
 	/// Find nearest vertex to point p
 	/// </summary>
-	int NearestVertex(Vector3d p) {
+	int NearestVertex(::Vector3 p) {
 		double nearSqr = std::numeric_limits<double>::max();
 		int i = -1;
 		int N = vertices.size();
-		for (int vi = 0; vi < N; ++vi) {
-			std::list<Vector3d>::iterator it = vertices.begin();
-			std::advance(it, vi);
-			double distSqr = (p - *it).squaredNorm();
+		int32_t count = 0;
+		for (List<Vector3>::Element *E; E; E = vertices.front()) {
+			double distSqr = E->get().distance_squared_to(p);
 			if (distSqr < nearSqr) {
 				nearSqr = distSqr;
-				i = vi;
+				i = count;
 			}
+			count++;
 		}
 		return i;
 	}
@@ -302,26 +305,24 @@ public:
 		DCurve3 resampled;
 		resampled.SetClosed(Closed());
 		double prev_t = 1.0 - corner_t;
+		Vector<Vector3> process_vertices;
+		for (List<Vector3>::Element *E; E; E = vertices.front()) {
+			process_vertices.push_back(E->get());
+		}
 		for (int k = 0; k < NV; ++k) {
 			double open_angle = std::abs(OpeningAngleDeg(k));
 			if (open_angle > flat_thresh && k > 0) {
 				// ignore skip this vertex
-			} else if (open_angle > sharp_thresh) {				
-				std::list<Vector3d>::iterator it = vertices.begin();
-				std::advance(it, k);
-				resampled.AppendVertex(*it);
-			} else {				
-				std::list<g3::Vector3d>::iterator it = vertices.begin();
-				std::advance(it, (k + 1) % NV);
-				Vector3d n = *it;
-				it = vertices.begin();
-				std::advance(it, k == 0 ? NV - 1 : k - 1);
-				Vector3d p = *it;						
-				it = vertices.begin();
-				std::advance(it, k);
-				resampled.AppendVertex(CurveUtils::lerp<Vector3d>(prev_t, p, *it));
-				resampled.AppendVertex(*it);
-				resampled.AppendVertex(CurveUtils::lerp<Vector3d>(corner_t, *it, n));
+			} else if (open_angle > sharp_thresh) {
+				resampled.AppendVertex(process_vertices[k]);
+			} else {
+				::Vector3 n = process_vertices[(k + 1) % NV];
+				::Vector3 p = process_vertices[k == 0 ? NV - 1 : k - 1];
+				::Vector3 curr = process_vertices[k];
+				// TODO Fire 2021-06-29 Use vector3 lerp
+				resampled.AppendVertex(CurveUtils::lerp<::Vector3>(prev_t, p, curr));
+				resampled.AppendVertex(curr);
+				resampled.AppendVertex(CurveUtils::lerp<::Vector3>(corner_t, curr, n));
 			}
 		}
 		return resampled;
@@ -330,54 +331,58 @@ public:
 		closed = bClosed;
 	}
 
-	Vector3d Start() {
+	::Vector3 Start() {
 		if (!vertices.size()) {
-			return Vector3d();
+			return ::Vector3();
 		}
-		return *vertices.begin();
+		return vertices.front()->get();
 	}
 
-	DCurve3(Wm5::Polygon2d poly, int ix, int iy) {
-		int NV = poly.GetNumVertices();
-		vertices.resize(NV);
-		for (int k = 0; k < NV; ++k) {
-			Vector3d v;
-			v[ix] = poly.GetVertex(k).X();
-			v[iy] = poly.GetVertex(k).Y();
-			vertices.push_back(v);
-		}
-		closed = true;
-		Timestamp = 1;
-	}
+	// DCurve3(Ref<Curve2D> poly, int ix, int iy) {
+	// 	if (poly.is_null()) {
+	// 		closed = false;
+	// 		Timestamp = 1;
+	// 		return;
+	// 	}
+	// 	int NV = poly->get_point_count();
+	// 	for (int k = 0; k < NV; ++k) {
+	// 		::Vector3 v;
+	// 		v[ix] = poly->get_point_position(k).x;
+	// 		v[iy] = poly->get_point_position(k).y;
+	// 		vertices.push_back(v);
+	// 	}
+	// 	closed = true;
+	// 	Timestamp = 1;
+	// }
 
 	DCurve3() {
 		closed = false;
 		Timestamp = 1;
 	}
 
-	DCurve3(std::list<Vector3d> verticesIn, bool bClosed, bool bTakeOwnership) {
+	DCurve3(List<::Vector3> verticesIn, bool bClosed, bool bTakeOwnership) {
 		if (bTakeOwnership) {
 			vertices = verticesIn;
 		} else {
 			vertices.clear();
-			for (Vector3d vec : verticesIn) {
-				vertices.push_back(vec);
+			for (int32_t vert_i = 0; vert_i < verticesIn.size(); vert_i++) {
+				vertices.push_back(verticesIn[vert_i]);
 			}
 		}
 		closed = bClosed;
 		Timestamp = 1;
 	}
 
-	DCurve3(std::vector<Vector3d> verticesIn, bool bClosed) {
+	DCurve3(Vector<::Vector3> verticesIn, bool bClosed) {
 		vertices.clear();
-		for (Vector3d vert : verticesIn) {
-			vertices.push_back(vert);
+		for (int32_t vert_i = 0; vert_i < verticesIn.size(); vert_i++) {
+			vertices.push_back(verticesIn[vert_i]);
 		}
 		closed = bClosed;
 		Timestamp = 1;
 	}
 
-	void AppendVertex(Vector3d v) {
+	void AppendVertex(::Vector3 v) {
 		vertices.push_back(v);
 		Timestamp++;
 	}
@@ -390,28 +395,26 @@ public:
 		return closed ? vertices.size() : vertices.size() - 1;
 	}
 
-	Wm5::Vector3d GetVertex(int i) override {
+	Vector3 GetVertex(int i) override {
 		int32_t count = 0;
-		for (Vector3d vert : vertices) {
-			if (count == i) {
-				return vert;
+		for (int32_t vert_i = 0; vert_i < vertices.size(); vert_i++) {
+			if (count == vert_i) {
+				return vertices[vert_i];
 			}
 			count++;
 		}
-		return Wm5::Vector3d();
+		return Vector3();
 	}
 
-	void SetVertex(int i, Vector3d v) {
-		std::list<Vector3d>::iterator it = vertices.begin();
-		std::advance(it, i);
-		*it = v;
-		Timestamp++;
-	}
+	// void SetVertex(int i, ::Vector3 v) {
+	// 	vertices.write[i] = v;
+	// 	Timestamp++;
+	// }
 
-	void SetVertices(std::vector<Vector3d> v) {
+	void SetVertices(Vector<::Vector3> v) {
 		vertices.clear();
-		for (Vector3d vert : v) {
-			vertices.push_back(vert);
+		for (int32_t vert_i = 0; vert_i < v.size(); vert_i++) {
+			vertices.push_back(v[vert_i]);
 		}
 		Timestamp++;
 	}
@@ -422,136 +425,109 @@ public:
 		Timestamp++;
 	}
 
-	void RemoveVertex(int idx) {
-		std::list<Vector3d>::iterator it = vertices.begin();
-		std::advance(it, idx);
-		vertices.erase(it);
-		Timestamp++;
-	}
+	// void RemoveVertex(int idx) {
+	// 	vertices.remove(idx);
+	// 	Timestamp++;
+	// }
 
 	void Reverse() {
-		std::reverse(vertices.begin(), vertices.end());
+		vertices.reverse();
 		Timestamp++;
 	}
 
-	Vector3d End() {
+	::Vector3 End() {
 		if (Closed()) {
-			std::list<Vector3d>::iterator it = vertices.begin();
-			std::advance(it, 0);
-			return *it;
+			ERR_FAIL_INDEX_V(0, vertices.size(), Vector3());
+			return vertices[0];
 		}
-		std::list<Vector3d>::iterator it = vertices.end();
-		return *it;
+		ERR_FAIL_INDEX_V(vertices.size() - 1, vertices.size(), Vector3());
+		return vertices[vertices.size() - 1];
 	}
 
 	bool Closed() {
 		return closed;
 	}
 
-	std::vector<Vector3d> Vertices() {
-		std::vector<Vector3d> out_vertices;
-		for (Vector3d vert : vertices) {
-			out_vertices.push_back(vert);
+	std::vector<::Vector3> Vertices() {
+		std::vector<::Vector3> out_vertices;
+		for (int32_t vert_i = 0; vert_i < vertices.size(); vert_i++) {
+			out_vertices.push_back(vertices[vert_i]);
 		}
 		return out_vertices;
 	}
 
-	Wm5::Segment3d GetSegment(int iSegment) {
+	g3::Segment3d GetSegment(int iSegment) {
 		if (Closed()) {
-			std::list<Vector3d>::iterator it = vertices.begin();
-			std::advance(it, iSegment);
-			Vector3d segment_start = *it;
-			it = vertices.begin();
-			std::advance(it, iSegment + 1 % vertices.size());
-			Vector3d segment_end = *it;
-			return Wm5::Segment3d(segment_start, segment_end);
+			::Vector3 segment_start = vertices[iSegment];
+			::Vector3 segment_end = vertices[iSegment + 1 % vertices.size()];
+			return g3::Segment3d(segment_start, segment_end);
 		}
-		std::list<Vector3d>::iterator it = vertices.begin();
-		std::advance(it, iSegment);
-		Vector3d segment_start = *it;
-		it = vertices.begin();
-		std::advance(it, iSegment + 1);
-		Vector3d segment_end = *it;
-		return Wm5::Segment3d(segment_start, segment_end);
+		::Vector3 segment_start = vertices[iSegment];
+		::Vector3 segment_end = vertices[iSegment + 1];
+		return Segment3d(segment_start, segment_end);
 	}
 
-	Vector3d PointAt(int iSegment, double fSegT) {
-		std::list<Vector3d>::iterator it = vertices.begin();
-		std::advance(it, iSegment);
-		Vector3d segment_start = *it;
-		it = vertices.begin();
-		std::advance(it, (iSegment + 1) % vertices.size());
-		Vector3d segment_end = *it;
-		Wm5::Segment3d seg = Wm5::Segment3d(segment_start, segment_end);
+	::Vector3 PointAt(int iSegment, double fSegT) {
+		::Vector3 segment_start = vertices[iSegment];
+		::Vector3 segment_end = vertices[(iSegment + 1) % vertices.size()];
+		Segment3d seg = Segment3d(segment_start, segment_end);
 		return seg.Center + (fSegT * seg.Direction);
 	}
 
-	AxisAlignedBox3d GetBoundingBox() {
-		AxisAlignedBox3d box;
-		for (Vector3d v : vertices) {
-			box.Contain(v);
+	AABB GetBoundingBox() {
+		AABB box;
+		for (int32_t vert_i = 0; vert_i < vertices.size(); vert_i++) {
+			Vector3 v = vertices[vert_i];
+			box.expand_to(v);
 		}
 		return box;
 	}
-	Vector3d Tangent(int i) {
-		std::vector<Wm5::Vector3d> out_vertices;
-		for (Vector3d vert : vertices) {
-			out_vertices.push_back(vert);
+	::Vector3 Tangent(int i) {
+		std::vector<::Vector3> out_vertices;
+		for (int32_t vert_i = 0; vert_i < vertices.size(); vert_i++) {
+			Vector3 v = vertices[vert_i];
+			out_vertices.push_back(v);
 		}
 		return CurveUtils::GetTangent(out_vertices, i, Closed());
 	}
 
-	Vector3d Centroid(int i) {
+	::Vector3 Centroid(int i) {
 		if (Closed()) {
 			int NV = vertices.size();
 			if (i == 0) {
-				std::list<Vector3d>::iterator it = vertices.begin();
-				std::advance(it, 1);
-				Vector3d a = *it;
-				it = vertices.begin();
-				std::advance(it, NV - 1);
-				Vector3d b = *it;
+				::Vector3 a = vertices[1];
+				::Vector3 b = vertices[NV - 1];
 				return 0.5 * (a + b);
 			} else {
-				std::list<Vector3d>::iterator it = vertices.begin();
-				std::advance(it, (i + 1) % NV);
-				Vector3d a = *it;
-				it = vertices.begin();
-				std::advance(it, i - 1);
-				Vector3d b = *it;
+				::Vector3 a = vertices[(i + 1) % NV];
+				::Vector3 b = vertices[i - 1];
 				return 0.5 * (a + b);
 			}
 		} else {
 			if (i == 0 || i == vertices.size() - 1) {
-				std::list<Vector3d>::iterator it = vertices.begin();
-				std::advance(it, i);
-				return *it;
+				return vertices[i];
 			} else {
-				std::list<Vector3d>::iterator it = vertices.begin();
-				std::advance(it, i + 1);
-				Vector3d a = *it;
-				it = vertices.begin();
-				std::advance(it, i - 1);
-				Vector3d b = *it;
+				::Vector3 a = vertices[i + 1];
+				::Vector3 b = vertices[i - 11];
 				return 0.5 * (a + b);
 			}
 		}
 	}
 
-	Index2i Neighbours(int i) {
+	Vector2i Neighbours(int i) {
 		int NV = vertices.size();
 		if (Closed()) {
 			if (i == 0)
-				return Index2i(NV - 1, 1);
+				return Vector2i(NV - 1, 1);
 			else
-				return Index2i(i - 1, (i + 1) % NV);
+				return Vector2i(i - 1, (i + 1) % NV);
 		} else {
 			if (i == 0)
-				return Index2i(-1, 1);
+				return Vector2i(-1, 1);
 			else if (i == NV - 1)
-				return Index2i(NV - 2, -1);
+				return Vector2i(NV - 2, -1);
 			else
-				return Index2i(i - 1, i + 1);
+				return Vector2i(i - 1, i + 1);
 		}
 	}
 
@@ -568,33 +544,27 @@ public:
 			if (i == 0 || i == vertices.size() - 1)
 				return 180;
 		}
-		std::list<Vector3d>::iterator it = vertices.begin();
-		std::advance(it, prev);
-		Vector3d prev_vert = *it;
-		it = vertices.begin();
-		std::advance(it, next);
-		Vector3d next_vert = *it;
-		it = vertices.begin();
-		std::advance(it, i);
-		Vector3d curr_vert = *it;
-		Vector3d e1 = (prev_vert - curr_vert);
-		Vector3d e2 = (next_vert - curr_vert);
+		::Vector3 prev_vert = vertices[prev];
+		::Vector3 next_vert = vertices[next];
+		::Vector3 curr_vert = vertices[i];
+		::Vector3 e1 = (prev_vert - curr_vert);
+		::Vector3 e2 = (next_vert - curr_vert);
 		e1.normalize();
 		e2.normalize();
-		float fDot = Mathd::Clamp(e1.dot(e2), -1, 1);
-		return (float)(Mathd::ACos(fDot) * Mathd::RAD_TO_DEG);
+		float fDot = CLAMP(e1.dot(e2), -1, 1);
+		return (float)(Math::rad2deg(Math::acos(fDot)));
 	}
 
 	/// <summary>
 	/// find squared distance from p to nearest segment on polyline
 	/// </summary>
-	double DistanceSquared(Vector3d p) {
+	double DistanceSquared(::Vector3 p) {
 		int iseg;
 		double segt;
 		return DistanceSquared(p, iseg, segt);
 	}
 
-	double DistanceSquared(Vector3d p, int &iNearSeg, double &fNearSegT) {
+	double DistanceSquared(::Vector3 p, int &iNearSeg, double &fNearSegT) {
 		iNearSeg = -1;
 		fNearSegT = std::numeric_limits<double>::max();
 		double dist = std::numeric_limits<double>::max();
@@ -602,21 +572,17 @@ public:
 		for (int vi = 0; vi < N; ++vi) {
 			int a = vi;
 			int b = (vi + 1) % vertices.size();
-			std::list<Vector3d>::iterator it = vertices.begin();
-			std::advance(it, a);
-			Vector3d a_vert = *it;
-			it = vertices.begin();
-			std::advance(it, b);
-			Vector3d b_vert = *it;
+			::Vector3 a_vert = vertices[a];
+			::Vector3 b_vert = vertices[b];
 			Segment3d seg = Segment3d(a_vert, b_vert);
 			double t = (p - seg.Center).dot(seg.Direction);
 			double d = std::numeric_limits<double>::max();
 			if (t >= seg.Extent) {
-				d = (p - seg.GetP1()).squaredNorm();
+				d = seg.GetP1().distance_squared_to(p);
 			} else if (t <= -seg.Extent) {
-				d = (p - seg.GetP0()).squaredNorm();
+				d = seg.GetP0().distance_squared_to(p);
 			} else {
-				d = ((seg.Center + (t * seg.Direction)) - p).squaredNorm();
+				d = p.distance_squared_to((seg.Center + (t * seg.Direction)));
 			}
 			if (d < dist) {
 				dist = d;

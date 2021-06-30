@@ -78,7 +78,7 @@ public:
 	virtual unsigned int GetVertexCount() const = 0;
 	virtual unsigned int GetTriangleCount() const = 0;
 
-	virtual VertexID AppendVertex(const Vector3<Real> &v) = 0;
+	virtual VertexID AppendVertex(const Vector3 &v) = 0;
 	virtual TriangleID AppendTriangle(const Vector3i &t, GroupID gID = 0) = 0;
 
 	// [RMS] this is mainly used for debugging, so is not strictly necessary to implement

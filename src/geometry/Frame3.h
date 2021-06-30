@@ -4,314 +4,352 @@
 
 #include <VectorUtil.h>
 
+#include "core/math/transform_3d.h"
+
 /*
-* Frame3 represents an orthonormal 3D coordinate frame, ie 3 orthogonal axes and an origin point.
-* Although it is possible to pack all that information into a Matrix4, or a Matrix3+Vector3, it
+* Frame3D represents an orthonormal 3D coordinate frame, ie 3 orthogonal axes and an origin point.
+* Although it is possible to pack all that information into a Transform, or a Basis+Vector3, it
 * is not very convenient to work with. Making the axes available explicitly allows for much
 * clearer code.
 *
-* Frame3 also provides functions to:
+* Frame3D also provides functions to:
 *    - manipulate the frame by (eg) setting one axis to point in a particular direction
 *    - transform vectors and frames to/from frame-relative coordinates
 *    - (TODO: ray-intersection, project to plane, ...)
 *
-* Internally, Frame3 stores the inverse of the rotation matrix that would take the XYZ axes
+* Internally, Frame3D stores the inverse of the rotation matrix that would take the XYZ axes
 * to the Frame axes. This is so that the axes are the rows of the matrix, and hence in
 * row-major storage the 3 floats of each axis are contiguous.
 *
 */
 namespace g3 {
 
-template <class Real>
-class Frame3 {
-public:
-	//! origin point of reference frame
-	Vector3<Real> Origin;
-
-	//! transpose of matrix that takes canonical axes to frame axes. Rows are frame axes.
-	Matrix3<Real> InverseRotation;
-
+class Frame3D : public Transform3D {
 public:
 	//! create a reference frame at a specific origin
-	Frame3(const Vector3<Real> &Origin = Vector3<Real>::Zero()) :
-			Origin(Origin), InverseRotation(Matrix3<Real>::Identity()) {}
+	Frame3D(const Vector3 &origin = Vector3()) {
+		set_origin(origin);
+	}
 
 	//! create an orthogonal frame at an origin with a given z axis vector
-	Frame3(const Vector3<Real> &vOrigin,
-			const Vector3<Real> &vNormalizedAxis, int nAxis,
-			bool bUseFastPerpVectors) :
-			Origin(vOrigin), InverseRotation(Matrix3<Real>::Identity()) {
+	Frame3D(const Vector3 &vOrigin,
+			const Vector3 &vNormalizedAxis, int nAxis,
+			bool bUseFastPerpVectors) {
+		origin = vOrigin;
 		if (bUseFastPerpVectors && nAxis == 2) {
-			Vector3<Real> kTangent0, kTangent1;
-			g3::ComputePerpVectors(vNormalizedAxis, kTangent0, kTangent1, true);
-			InverseRotation.row(0) = kTangent0;
-			InverseRotation.row(1) = kTangent1;
-			InverseRotation.row(2) = vNormalizedAxis;
+			Vector3 kTangent0, kTangent1;
+			ComputePerpVectors(vNormalizedAxis, kTangent0, kTangent1, true);
+			basis.get_axis(0) = kTangent0;
+			basis.get_axis(1) = kTangent1;
+			basis.get_axis(2) = vNormalizedAxis;
 		} else {
 			AlignAxis(nAxis, vNormalizedAxis);
 		}
 	}
 
 	//! copy a reference frame
-	Frame3(const Frame3 &copy) :
-			Origin(copy.Origin), InverseRotation(copy.InverseRotation) {}
+	Frame3D(const Frame3D &copy) :
+			origin(copy.origin), elements(copy.get_basis()) {}
 
-	~Frame3();
+	~Frame3D();
 
 	//! get an axis of the frame
-	Vector3<Real> Axis(unsigned int nAxis) const {
-		return InverseRotation.row(nAxis);
+	Vector3 Axis(unsigned int nAxis) const {
+		return get_basis().get_axis(nAxis);
 	}
 
 	//! access the axes of the frame
-	Vector3<Real> X() const {
-		return InverseRotation.row(0);
+	Vector3 X() const {
+		return get_basis().get_axis(0);
 	}
-	Vector3<Real> Y() const {
-		return InverseRotation.row(1);
+	Vector3 Y() const {
+		return get_basis().get_axis(1);
 	}
-	Vector3<Real> Z() const {
-		return InverseRotation.row(2);
+	Vector3 Z() const {
+		return get_basis().get_axis(2);
+	}
+
+	void AlignAxis(int nAxis, const Vector3 &toAxis, bool bNormalized) {
+		Basis matAlign;
+		ComputeAlignAxisMatrix(
+				Axis(nAxis), (bNormalized) ? toAxis : toAxis.normalized(), matAlign);
+		Rotate(matAlign, false);
 	}
 
 	//! matrix that rotates canonical/unit XYZ axes to frame axes
-	Matrix3<Real> GetRotation() const {
-		return InverseRotation.transpose();
+	Basis GetRotation() const {
+		return get_basis().transpose();
 	}
 
 	//! treat v as begin in frame-relative coords, transform to absolute/world coords
-	void SetToWorldCoords(Vector3<Real> &v) const {
-		v = Origin + InverseRotation.transpose() * v;
+	void SetToWorldCoords(Vector3 &v) const {
+		v = get_origin() + get_basis().transpose().xform(v);
 	}
 	//! treat v as begin in frame-relative coords, transform to absolute/world coords
-	Vector3<Real> ToWorldCoords(const Vector3<Real> &v) const {
-		return Origin + InverseRotation.transpose() * v;
+	Vector3 ToWorldCoords(const Vector3 &v) const {
+		return get_origin() + get_basis().transposed().xform(v);
 	}
 
 	//! treat v as begin in absolute/world coords, transform to frame-relative coords
-	void SetToAxisCoords(Vector3<Real> &v) const {
-		v = InverseRotation * (v - Origin);
+	void SetToAxisCoords(Vector3 &v) const {
+		v = get_basis().xform(v - origin);
 	}
 	//! treat v as begin in absolute/world coords, transform to frame-relative coords
-	Vector3<Real> ToAxisCoords(const Vector3<Real> &v) const {
-		return InverseRotation * (v - Origin);
+	Vector3 ToAxisCoords(const Vector3 &v) const {
+		return get_basis().xform(v - origin);
 	}
 
 	//! treat f as being relative to this frame, transform to absolute/world frame
-	Frame3<Real> ToWorldCoords(const Frame3<Real> &f, bool bPreserveOrigin = false) const {
-		Vector3<Real> x = InverseRotation.transpose() * f.X();
-		Vector3<Real> y = InverseRotation.transpose() * f.Y();
-		Vector3<Real> z = InverseRotation.transpose() * f.Z();
-		Frame3<Real> l((bPreserveOrigin) ? f.Origin : ToWorldCoords(f.Origin));
+	Frame3D ToWorldCoords(const Frame3D &f, bool bPreserveOrigin = false) const {
+		Vector3 x = get_basis().transposed().xform(f.X());
+		Vector3 y = get_basis().transposed().xform(f.Y());
+		Vector3 z = get_basis().transposed().xform(f.Z());
+		Frame3D l;
+		l.origin = ((bPreserveOrigin) ? f.origin : ToWorldCoords(f.origin));
 		l.SetFrame(x, y, z);
 		return l;
 	}
 
 	//! treat f as being an absolute/world frame, transform to be relative to this frame
-	Frame3<Real> ToAxisCoords(const Frame3<Real> &f, bool bPreserveOrigin = false) const {
-		Vector3<Real> x = InverseRotation * f.X();
-		Vector3<Real> y = InverseRotation * f.Y();
-		Vector3<Real> z = InverseRotation * f.Z();
-		Frame3<Real> w((bPreserveOrigin) ? f.Origin : ToAxisCoords(f.Origin));
+	Frame3D ToAxisCoords(const Frame3D &f, bool bPreserveOrigin = false) const {
+		Vector3 x = get_basis().xform(f.X());
+		Vector3 y = get_basis().xform(f.Y());
+		Vector3 z = get_basis().xform(f.Z());
+		Frame3D w;
+		w.origin = (bPreserveOrigin) ? f.origin : ToAxisCoords(f.origin);
 		w.SetFrame(x, y, z);
 		return w;
 	}
 
 	//! translate the reference frame origin
-	void Translate(const Vector3<Real> &vTranslate, bool bRelative) {
-		if (bRelative)
-			Origin += vTranslate;
-		else
-			Origin = vTranslate;
+	void Translate(const Vector3 &vTranslate, bool bRelative) {
+		if (bRelative) {
+			origin += vTranslate;
+		} else {
+			origin = vTranslate;
+		}
 	}
 	//! rotate the reference frame
-	void Rotate(const Matrix3<Real> &mRotation, bool bReNormalize) {
-		// [RMS] does not seem to work as expected...??
-		Vector3<Real> rowX(mRotation * InverseRotation.row(0).transpose());
-		Vector3<Real> rowY(mRotation * InverseRotation.row(1).transpose());
-		Vector3<Real> rowZ(mRotation * InverseRotation.row(2).transpose());
-
+	void Rotate(const Basis &mRotation, bool bReNormalize) {
+		rotate(Quat(mRotation));
 		if (bReNormalize) {
-			Vector3<Real> vCrossY = rowZ.cross(rowX);
-			vCrossY.normalize();
-			rowY = (vCrossY.dot(rowY) < 0) ? -vCrossY : vCrossY;
-			Vector3<Real> vCrossX = rowZ.cross(rowY);
-			vCrossX.normalize();
-			rowX = (vCrossX.dot(rowX) < 0) ? -vCrossX : vCrossX;
-			Vector3<Real> vCrossZ = rowX.cross(rowY);
-			vCrossZ.normalize();
-			rowZ = (vCrossZ.dot(rowZ) < 0) ? -vCrossZ : vCrossZ;
+			normalize()
 		}
-
-		InverseRotation.row(0) = rowX;
-		InverseRotation.row(1) = rowY;
-		InverseRotation.row(2) = rowZ;
 	}
 
 	//! make axes perpendicular. can "preserve" one axis by setting nPreserveAxis (0=X,1=Y,2=Z)
 
 	void ReNormalize(int nPreserveAxis) {
-		Vector3<Real> rowX(InverseRotation.row(0));
-		Vector3<Real> rowY(InverseRotation.row(1));
-		Vector3<Real> rowZ(InverseRotation.row(2));
+		Vector3 rowX(get_basis().get_axis(0));
+		Vector3 rowY(get_basis().get_axis(1));
+		Vector3 rowZ(get_basis().get_axis(2));
 
 		switch (nPreserveAxis) {
 			default:
 			case -1: {
-				Vector3<Real> vCrossY = rowZ.cross(rowX);
+				Vector3 vCrossY = rowZ.cross(rowX);
 				vCrossY.normalize();
 				rowY = (vCrossY.dot(rowY) < 0) ? -vCrossY : vCrossY;
-				Vector3<Real> vCrossX = rowZ.cross(rowY);
+				Vector3 vCrossX = rowZ.cross(rowY);
 				vCrossX.normalize();
 				rowX = (vCrossX.dot(rowX) < 0) ? -vCrossX : vCrossX;
-				Vector3<Real> vCrossZ = rowX.cross(rowY);
+				Vector3 vCrossZ = rowX.cross(rowY);
 				vCrossZ.normalize();
 				rowZ = (vCrossZ.dot(rowZ) < 0) ? -vCrossZ : vCrossZ;
 			} break;
 
 			case 0: {
 				rowX.normalize();
-				Vector3<Real> vCrossY(rowX.cross(rowZ));
+				Vector3 vCrossY(rowX.cross(rowZ));
 				vCrossY.normalize();
 				rowY = (vCrossY.dot(rowY) < 0) ? -vCrossY : vCrossY;
-				Vector3<Real> vCrossZ(rowX.cross(rowY));
+				Vector3 vCrossZ(rowX.cross(rowY));
 				vCrossZ.normalize();
 				rowZ = (vCrossZ.dot(rowZ) < 0) ? -vCrossZ : vCrossZ;
 			} break;
 
 			case 1: {
 				rowY.normalize();
-				Vector3<Real> vCrossX(rowY.cross(rowZ));
+				Vector3 vCrossX(rowY.cross(rowZ));
 				vCrossX.normalize();
 				rowX = (vCrossX.dot(rowX) < 0) ? -vCrossX : vCrossX;
-				Vector3<Real> vCrossZ(rowX.cross(rowY));
+				Vector3 vCrossZ(rowX.cross(rowY));
 				vCrossZ.normalize();
 				rowZ = (vCrossZ.dot(rowZ) < 0) ? -vCrossZ : vCrossZ;
 			} break;
 
 			case 2: {
 				rowZ.normalize();
-				Vector3<Real> vCrossX(rowY.cross(rowZ));
+				Vector3 vCrossX(rowY.cross(rowZ));
 				vCrossX.normalize();
 				rowX = (vCrossX.dot(rowX) < 0) ? -vCrossX : vCrossX;
-				Vector3<Real> vCrossY(rowX.cross(rowZ));
+				Vector3 vCrossY(rowX.cross(rowZ));
 				vCrossY.normalize();
 				rowY = (vCrossY.dot(rowY) < 0) ? -vCrossY : vCrossY;
 			} break;
 		}
 
-		InverseRotation.row(0) = rowX;
-		InverseRotation.row(1) = rowY;
-		InverseRotation.row(2) = rowZ;
+		get_basis().get_axis(0) = rowX;
+		get_basis().get_axis(1) = rowY;
+		get_basis().get_axis(2) = rowZ;
 	}
 
 	//! intersect ray with plane defined by one of the axis vectors
-	bool IntersectRay(const Vector3<Real> &vRayOrigin,
-			const Vector3<Real> &vRayDirection,
-			Vector3<Real> &vRayHit, int nPlaneNormalAxis) {
-		Vector3<Real> N = Axis(nPlaneNormalAxis);
-		Real d = -(Origin.dot(N));
-		Real fDenom = vRayDirection.dot(N);
-		if (fDenom < Math<Real>::ZERO_TOLERANCE)
+	bool IntersectRay(const Vector3 &vRayOrigin,
+			const Vector3 &vRayDirection,
+			Vector3 &vRayHit, int nPlaneNormalAxis) {
+		Vector3 N = Axis(nPlaneNormalAxis);
+		real_t d = -(origin.dot(N));
+		real_t fDenom = vRayDirection.dot(N);
+		if (Math::is_zero_approx(fDenom)) {
 			return false;
+		}
 
-		Real t = -(vRayOrigin.dot(N) + d) / fDenom;
+		real_t t = -(vRayOrigin.dot(N) + d) / fDenom;
 		vRayHit = vRayOrigin + t * vRayDirection;
 		return true;
 	}
-	Vector3<Real> IntersectRay(const Vector3<Real> &vRayOrigin,
-			const Vector3<Real> &vRayDirection,
+	Vector3 IntersectRay(const Vector3 &vRayOrigin,
+			const Vector3 &vRayDirection,
 			int nPlaneNormalAxis) {
-		Vector3<Real> vHit = Vector3<Real>::Zero();
+		Vector3 vHit;
 		bool bOK = IntersectRay(vRayOrigin, vRayDirection, vHit, nPlaneNormalAxis);
 		// [TODO] return invalid vector here instead of ZERO
-		return (bOK) ? vHit : Vector3<Real>::Zero();
+		return (bOK) ? vHit : Vector3();
 	}
 
 	//! create frame at an origin with a given x/y/z vectors
-	Frame3(const Vector3<Real> &vOrigin, const Vector3<Real> &vXAxis,
-			const Vector3<Real> &vYAxis, const Vector3<Real> &vZAxis) :
-			Origin(vOrigin), InverseRotation(Matrix3<Real>::Identity()) {
+	Frame3D(const Vector3 &vOrigin, const Vector3 &vXAxis,
+			const Vector3 &vYAxis, const Vector3 &vZAxis) :
+			origin(vOrigin) {
 		SetFrame(vXAxis, vYAxis, vZAxis);
 	}
 
 	//! create frame with a given rotation
-	Frame3(const Matrix3<Real> &mRotation) :
-			Origin(Vector3<Real>::Zero()), InverseRotation(mRotation.transpose()) {}
+	Frame3D(const Basis &mRotation) {
+		set_basis(mRotation.transposed());
+	}
 
 	//! create frame at an origin with a given rotation
-	Frame3(const Vector3<Real> &vOrigin,
-			const Matrix3<Real> &mRotation) :
-			Origin(vOrigin), InverseRotation(mRotation.transpose()) {}
+	Frame3D(const Vector3 &vOrigin,
+			const Basis &mRotation) :
+	{
+		set_origin(vOrigin);
+		set_basis(mRotation);
+	}
 
 	//! allow external setting of matrix...
-	void SetFrame(const Matrix3<Real> &matRotate) {
-		InverseRotation = matRotate.transpose();
+	void SetFrame(const Basis &matRotate) {
+		basis = matRotate.transposed();
 	}
 
 	//! set the reference frame axes
-	void SetFrame(const Vector3<Real> &vAxisX,
-			const Vector3<Real> &vAxisY,
-			const Vector3<Real> &vAxisZ) {
-		InverseRotation.row(0) = vAxisX.normalized();
-		InverseRotation.row(1) = vAxisY.normalized();
-		InverseRotation.row(2) = vAxisZ.normalized();
+	void SetFrame(const Vector3 &vAxisX,
+			const Vector3 &vAxisY,
+			const Vector3 &vAxisZ) {
+		basis.set_axis(0, vAxisX.normalized());
+		basis.set_axis(1, vAxisY.normalized());
+		basis.set_axis(2, vAxisZ.normalized());
+	}
+
+	void ComputePerpVectors(const Vector3 &vIn,
+			Vector3 &vOut1, Vector3 &vOut2, bool bInIsNormalized) {
+		Vector3 vPerp(vIn);
+		if (!bInIsNormalized)
+			vPerp.normalize();
+
+		if (fabs(vPerp.x) >= fabs(vPerp.y) && fabs(vPerp.x) >= fabs(vPerp.z)) {
+			vOut1.x = -vPerp.y;
+			vOut1.y = vPerp.x;
+			vOut1.z = 0.0;
+		} else {
+			vOut1.x = 0.0;
+			vOut1.y = vPerp.z;
+			vOut1.z = -vPerp.y;
+		}
+
+		vOut1.normalize();
+		vOut2 = vPerp.cross(vOut1);
+	}
+
+	void ComputeAlignAxisMatrix(const Vector3 &vInitial,
+			const Vector3 &vAlignWith, Basis &matrix) {
+		// compute cosine of angle between vectors
+		real_t axisDot = vAlignWith.dot(vInitial);
+
+		// compute rotation axis
+		Vector3 axisCross(vInitial.cross(vAlignWith));
+
+		// apply rotation if necessary
+		if (!Math::is_zero_approx(origin.distance_squared_to(axisCross))) {
+			// compute normalized axis and angle, then create rotation around axis
+			axisCross.normalize();
+			real_t fAngle = Math::acos(axisDot / vAlignWith.norm());
+			matrix = Basis(axisCross, fAngle);
+
+		} else if (axisDot < (real_t)0) {
+			// find some perpendicular vectors
+			Vector3 vPerp1, vPerp2;
+			ComputePerpVectors(vInitial, vPerp1, vPerp2, false);
+
+			matrix = Basis(vPerp1, Math::deg2rad(180.0f));
+		} else {
+			matrix = Basis();
+		}
 	}
 
 	//! rotate selected axis of this frame into toAxis
-	void AlignAxis(int nAxis, const Vector3<Real> &toAxis,
+	void AlignAxis(int nAxis, const Vector3 &toAxis,
 			bool bNormalized) {
-		Matrix3<Real> matAlign;
-		g3::ComputeAlignAxisMatrix(
+		Basis matAlign;
+		ComputeAlignAxisMatrix(
 				Axis(nAxis), (bNormalized) ? toAxis : toAxis.normalized(), matAlign);
 		Rotate(matAlign, false);
 	}
 
 	//! compute matrix that rotates this frame into toFrame
-	void ComputeAlignmentMatrix(const Frame3<Real> &toFrame,
-			Matrix3<Real> &matRotate) {
+	void ComputeAlignmentMatrix(const Frame3D &toFrame,
+			Basis &matRotate) {
 		// align vCurFrame.Z() with vDestFrame.Z()
-		Matrix3<Real> matAlignZ;
+		Basis matAlignZ;
 		ComputeAlignAxisMatrix(this->Z(), toFrame.Z(), matAlignZ);
-		Frame3<Real> vCopy(*this);
-		vCopy.Rotate(matAlignZ);
+		Frame3D vCopy(*this);
+		vCopy.Rotate(matAlignZ, false);
 
 		// compute rotation angle around vDestFrame.Z()
-		Vector3<Real> vX1(toFrame.X());
-		Vector3<Real> vX2(vCopy.X());
-		Matrix3<Real> matAlignX;
+		Vector3 vX1(toFrame.X());
+		Vector3 vX2(vCopy.X());
+		Basis matAlignX;
 		ComputeAlignAxisMatrix(vX2, vX1, matAlignX);
 
 		matRotate = matAlignX * matAlignZ;
 
-		vCopy = Frame3<Real>(*this);
-		vCopy.Rotate(matRotate);
-		Real fDotX = vCopy.X().dot(toFrame.X());
-		Real fDotY = vCopy.Y().dot(toFrame.Y());
-		Real fDotZ = vCopy.Z().dot(toFrame.Z());
+		vCopy = Frame3D(*this);
+		vCopy.Rotate(matRotate, false);
+		real_t fDotX = vCopy.X().dot(toFrame.X());
+		real_t fDotY = vCopy.Y().dot(toFrame.Y());
+		real_t fDotZ = vCopy.Z().dot(toFrame.Z());
 
 		// check if Y is flipped - if it is, flip Y...
 		// if ( vCopy.Y().dot( toFrame.Y() ) < 0 ) {
-		//	Matrix3<Real> matFlip( 1,0,0, 0,-1,0, 0,0,1 );
+		//	Basis matFlip( 1,0,0, 0,-1,0, 0,0,1 );
 		//	matRotate = matRotate * matFlip;
 		//}
 		//// check if Z is flipped - if it is, flip Z...
 		if (vCopy.Z().dot(toFrame.Z()) < 0) {
-			Matrix3<Real> matFlip;
-			matFlip.row(0) = Vector3<Real>(1, 0, 0);
-			matFlip.row(1) = Vector3<Real>(0, 1, 0);
-			matFlip.row(2) = Vector3<Real>(0, 0, -1);
+			Basis matFlip;
+			matFlip.get_axis(0) = Vector3(1, 0, 0);
+			matFlip.get_axis(1) = Vector3(0, 1, 0);
+			matFlip.get_axis(2) = Vector3(0, 0, -1);
 			matRotate = matRotate * matFlip;
 		}
 
 		// [RMS] does this do anything??
-		vCopy = Frame3<Real>(*this);
-		vCopy.Rotate(matRotate);
+		vCopy = Frame3D(*this);
+		vCopy.Rotate(matRotate, false);
 		fDotX = vCopy.X().dot(toFrame.X());
 		fDotY = vCopy.Y().dot(toFrame.Y());
 		fDotZ = vCopy.Z().dot(toFrame.Z());
 	}
 };
-typedef Frame3<float> Frame3f;
-typedef Frame3<double> Frame3d;
 } // namespace g3

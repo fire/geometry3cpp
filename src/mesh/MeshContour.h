@@ -25,7 +25,7 @@ public:
 		dvector<VertexID> vZeroVertices;
 	};
 
-	// f must implement: Real func_name(Vector3<Real> v)
+	// f must implement: Real func_name(Vector3 v)
 	template <typename Func>
 	void Insert(DMesh3<Real> &mesh, ContourData &d, const Func &f);
 
@@ -80,7 +80,7 @@ void MeshContour<Real>::Insert(DMesh3<Real> &mesh, ContourData &d, const Func &f
 
 		// SplitEdge just bisects edge - use LERP to do better
 		Real t = f0 / (f0 - f1);
-		Vector3<Real> newPos = ((Real)1 - t) * mesh.GetVertex(ev[0]) + (t)*mesh.GetVertex(ev[1]);
+		Vector3 newPos = ((Real)1 - t) * mesh.GetVertex(ev[0]) + (t)*mesh.GetVertex(ev[1]);
 		mesh.SetVertex(splitInfo.vNew, newPos);
 
 		ContourEdge c = { ev, Vector2f(f0, f1), splitInfo.vNew };
@@ -95,9 +95,9 @@ void MeshContour<Real>::Project(DMesh3<Real> &mesh, ContourData &d, unsigned int
 			[=, &mesh](ContourEdge e) {
 				// set up interval
 				int iLow = (e.ef[0] < e.ef[1]) ? 0 : 1;
-				Vector3<Real> v_neg = mesh.GetVertex(e.ev[iLow]), v_pos = mesh.GetVertex(e.ev[(iLow + 1) % 2]);
+				Vector3 v_neg = mesh.GetVertex(e.ev[iLow]), v_pos = mesh.GetVertex(e.ev[(iLow + 1) % 2]);
 				Real f_neg = e.ef[iLow], f_pos = e.ef[(iLow + 1) % 2];
-				Vector3<Real> v_mid = mesh.GetVertex(e.newv);
+				Vector3 v_mid = mesh.GetVertex(e.newv);
 
 				// solve steps
 				unsigned int i = 0;

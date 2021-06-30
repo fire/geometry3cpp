@@ -7,25 +7,25 @@ namespace g3 {
 class IPixelHitRadius {
 public:
 	virtual ~IPixelHitRadius() {}
-	virtual float GetWorldHitRadius(const g3::Vector3f &vHit) const = 0;
+	virtual float GetWorldHitRadius(const Vector3 &vHit) const = 0;
 };
 
 class HitTestRay {
 public:
-	g3::Vector3f vOrigin;
-	g3::Vector3f vDirection;
+	Vector3 vOrigin;
+	Vector3 vDirection;
 	IPixelHitRadius *pHitThresh;
 
 	HitTestRay() {
-		vOrigin = vDirection = g3::Vector3f::Zero();
+		vOrigin = vDirection = Vector3::Zero();
 		pHitThresh = nullptr;
 	}
-	HitTestRay(const g3::Vector3f &o, const g3::Vector3f &d) {
+	HitTestRay(const Vector3 &o, const Vector3 &d) {
 		vOrigin = o;
 		vDirection = d;
 		pHitThresh = nullptr;
 	}
-	HitTestRay(const g3::Vector3f &o, const g3::Vector3f &d, IPixelHitRadius *pPixelRadius) {
+	HitTestRay(const Vector3 &o, const Vector3 &d, IPixelHitRadius *pPixelRadius) {
 		vOrigin = o;
 		vDirection = d;
 		pHitThresh = pPixelRadius;

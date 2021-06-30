@@ -53,7 +53,7 @@ public:
 	// 	return &m_vColors[3 * k];
 	// }
 	// void GetSegmentIndices(unsigned int k, unsigned int &i0, unsigned int &i1) const;
-	// void GetSegment(unsigned int k, g3::Vector3f &v0, g3::Vector3f &v1) const;
+	// void GetSegment(unsigned int k, Vector3 &v0, Vector3 &v1) const;
 
 	PackedLines(LinesType eType) { m_eType = eType; }
 
